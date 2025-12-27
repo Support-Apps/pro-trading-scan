@@ -8,69 +8,168 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root { --bg: #0B0E11; --card: #1a1d21; --border: rgba(255,255,255,0.08); --gold: #F0B90B; --green: #0ECB81; --red: #F6465D; --text: #EAECEF; --dim: #848E9C; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-        .page { padding: 15px; }
-        .camera-area { position: relative; border-radius: 14px; overflow: hidden; background: #000; aspect-ratio: 16/9; border: 2px solid var(--border); margin-bottom: 15px; }
+        
+        .intro-page { min-height: 100vh; padding: 20px; padding-bottom: 100px; }
+        .intro-page.hidden { display: none; }
+        .intro-header { text-align: center; padding: 30px 0 20px; }
+        .intro-logo { width: 80px; height: 80px; margin: 0 auto 16px; background: linear-gradient(135deg, var(--gold), #D4A017); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 36px; }
+        .intro-header h1 { font-size: 1.8em; font-weight: 800; color: var(--gold); }
+        .intro-header p { color: var(--dim); font-size: 0.9em; margin-top: 4px; }
+        .intro-card { background: var(--card); border-radius: 16px; padding: 20px; margin-bottom: 12px; border: 1px solid var(--border); }
+        .intro-card h3 { font-size: 1em; margin-bottom: 12px; }
+        .intro-card p { color: var(--dim); font-size: 0.85em; line-height: 1.6; margin-bottom: 8px; }
+        .pattern-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .tag { padding: 6px 10px; border-radius: 8px; font-size: 0.75em; font-weight: 600; }
+        .tag.green { background: rgba(14,203,129,0.15); color: var(--green); }
+        .tag.red { background: rgba(246,70,93,0.15); color: var(--red); }
+        .tag.gold { background: rgba(240,185,11,0.15); color: var(--gold); }
+        .disclaimer { background: rgba(246,70,93,0.08); border: 1px solid rgba(246,70,93,0.2); border-radius: 12px; padding: 14px; }
+        .disclaimer p { font-size: 0.8em; color: var(--dim); margin: 0; }
+        .intro-btn-wrap { position: fixed; bottom: 0; left: 0; right: 0; padding: 16px 20px 28px; background: linear-gradient(0deg, var(--bg) 70%, transparent); }
+        .intro-btn { width: 100%; padding: 16px; border: none; border-radius: 14px; font-size: 1em; font-weight: 700; cursor: pointer; background: linear-gradient(135deg, var(--gold), #D4A017); color: #000; }
+        
+        .scanner-page { display: none; height: 100vh; flex-direction: column; }
+        .scanner-page.active { display: flex; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--card); border-bottom: 1px solid var(--border); }
+        .logo-sm { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+        .logo-sm .icon { width: 28px; height: 28px; background: var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #000; font-weight: 800; }
+        .logo-sm span { color: var(--gold); }
+        .back-btn { background: transparent; border: 1px solid var(--border); color: var(--dim); padding: 6px 12px; border-radius: 8px; font-size: 0.8em; cursor: pointer; }
+        
+        .camera-area { position: relative; margin: 8px; border-radius: 14px; overflow: hidden; background: #000; aspect-ratio: 16/9; border: 2px solid var(--border); }
         #video { width: 100%; height: 100%; object-fit: cover; }
         #canvas { display: none; }
-        .live-badge { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.8); padding: 4px 10px; border-radius: 6px; font-size: 0.7em; color: var(--red); }
-        .result-box { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border); }
-        .direction { font-size: 2em; font-weight: 800; text-align: center; margin-bottom: 10px; }
-        .direction.bullish { color: var(--green); }
-        .direction.bearish { color: var(--red); }
-        .direction.neutral { color: var(--gold); }
-        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .stat { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; text-align: center; }
-        .stat .num { font-size: 1.8em; font-weight: 800; }
-        .stat .num.green { color: var(--green); }
-        .stat .num.red { color: var(--red); }
-        .stat .lbl { font-size: 0.8em; color: var(--dim); }
-        .debug { background: #1a1a2e; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 0.75em; color: #888; margin-top: 10px; max-height: 150px; overflow-y: auto; }
-        .patterns { margin-top: 15px; }
-        .patterns h3 { font-size: 0.9em; color: var(--dim); margin-bottom: 10px; }
-        .pat { display: inline-block; padding: 8px 12px; border-radius: 8px; margin: 4px; font-size: 0.85em; font-weight: 600; }
-        .pat.bullish { background: rgba(14,203,129,0.15); color: var(--green); }
-        .pat.bearish { background: rgba(246,70,93,0.15); color: var(--red); }
-        .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 1.1em; font-weight: 700; cursor: pointer; }
-        .btn.start { background: var(--green); color: #fff; }
-        .btn.stop { background: var(--red); color: #fff; }
+        .live-badge { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.8); padding: 4px 10px; border-radius: 6px; font-size: 0.7em; color: var(--red); display: none; }
+        .scan-overlay { position: absolute; inset: 0; pointer-events: none; display: none; }
+        .scan-overlay.active { display: block; }
+        .scan-frame { position: absolute; top: 5%; left: 3%; right: 3%; bottom: 5%; border: 2px solid rgba(240,185,11,0.4); border-radius: 10px; }
+        
+        .result-panel { flex: 1; padding: 12px; overflow-y: auto; }
+        .signal-card { background: var(--card); border-radius: 16px; padding: 20px; margin-bottom: 12px; border: 1px solid var(--border); text-align: center; }
+        .signal-icon { font-size: 48px; margin-bottom: 10px; }
+        .signal-dir { font-size: 2em; font-weight: 800; }
+        .signal-dir.bullish { color: var(--green); }
+        .signal-dir.bearish { color: var(--red); }
+        .signal-dir.neutral { color: var(--gold); }
+        .signal-conf { font-size: 1.2em; color: var(--dim); margin-top: 5px; }
+        
+        .prediction-card { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 12px; border: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+        .prediction-card.bullish { border-left: 4px solid var(--green); }
+        .prediction-card.bearish { border-left: 4px solid var(--red); }
+        .prediction-card .icon { font-size: 28px; }
+        .prediction-card .text { flex: 1; }
+        .prediction-card .text strong { display: block; font-size: 1em; }
+        .prediction-card .text span { font-size: 0.8em; color: var(--dim); }
+        .prediction-card .action { padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 0.85em; }
+        .prediction-card .action.buy { background: rgba(14,203,129,0.2); color: var(--green); }
+        .prediction-card .action.sell { background: rgba(246,70,93,0.2); color: var(--red); }
+        
+        .patterns-card { background: var(--card); border-radius: 12px; padding: 12px; border: 1px solid var(--border); }
+        .patterns-header { font-size: 0.8em; color: var(--dim); margin-bottom: 8px; }
+        .pattern-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .chip { padding: 8px 12px; border-radius: 8px; font-size: 0.8em; font-weight: 600; }
+        .chip.bullish { background: rgba(14,203,129,0.15); color: var(--green); }
+        .chip.bearish { background: rgba(246,70,93,0.15); color: var(--red); }
+        
+        .debug-box { background: #1a1a2e; border-radius: 8px; padding: 10px; margin-top: 12px; font-family: monospace; font-size: 0.7em; color: #888; max-height: 120px; overflow-y: auto; }
+        
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--dim); }
+        .empty-state .icon { font-size: 48px; margin-bottom: 15px; }
+        
+        .scan-btn-area { padding: 12px; padding-bottom: 25px; }
+        .scan-btn { width: 100%; padding: 16px; border: none; border-radius: 14px; font-size: 1.1em; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .scan-btn.start { background: var(--green); color: #fff; }
+        .scan-btn.stop { background: var(--red); color: #fff; }
     </style>
 </head>
 <body>
-    <div class="page">
+    <div class="intro-page" id="introPage">
+        <div class="intro-header">
+            <div class="intro-logo">📈</div>
+            <h1>TradeScan Pro</h1>
+            <p>AI Candlestick Pattern Scanner</p>
+        </div>
+        <div class="intro-card">
+            <h3>🎯 Real-Time Chart Analysis</h3>
+            <p>Point your camera at any candlestick chart. The AI detects patterns and predicts the next market direction.</p>
+        </div>
+        <div class="intro-card">
+            <h3>🕯️ Detected Patterns</h3>
+            <p>The scanner recognizes these Japanese candlestick patterns:</p>
+            <div class="pattern-tags">
+                <span class="tag green">🔨 Hammer</span>
+                <span class="tag green">🫂 Bullish Engulfing</span>
+                <span class="tag green">👨‍👨‍👦 3 White Soldiers</span>
+                <span class="tag red">💫 Shooting Star</span>
+                <span class="tag red">🫂 Bearish Engulfing</span>
+                <span class="tag red">🐦‍⬛ 3 Black Crows</span>
+            </div>
+        </div>
+        <div class="intro-card">
+            <h3>📊 Supported Charts</h3>
+            <p>Works with TradingView, MT4, MT5, and most charting platforms. Supports both light and dark backgrounds.</p>
+        </div>
+        <div class="disclaimer">
+            <p>⚠️ <strong>Risk Warning:</strong> Educational tool only. Not financial advice. Always manage your risk.</p>
+        </div>
+        <div class="intro-btn-wrap">
+            <button class="intro-btn" onclick="showScanner()">→ Open Scanner</button>
+        </div>
+    </div>
+    
+    <div class="scanner-page" id="scannerPage">
+        <div class="top-bar">
+            <div class="logo-sm"><div class="icon">TS</div>Trade<span>Scan</span></div>
+            <button class="back-btn" onclick="showIntro()">← Back</button>
+        </div>
         <div class="camera-area">
             <video id="video" autoplay playsinline></video>
             <canvas id="canvas"></canvas>
-            <div class="live-badge" id="liveBadge" style="display:none;">● LIVE</div>
+            <div class="scan-overlay" id="overlay"><div class="scan-frame"></div></div>
+            <div class="live-badge" id="liveBadge">● LIVE</div>
         </div>
-        
-        <div class="result-box">
-            <div class="direction neutral" id="direction">WAITING</div>
-            <div class="stats">
-                <div class="stat">
-                    <div class="num green" id="greenCount">0</div>
-                    <div class="lbl">GREEN (Bullish)</div>
-                </div>
-                <div class="stat">
-                    <div class="num red" id="redCount">0</div>
-                    <div class="lbl">RED (Bearish)</div>
-                </div>
+        <div class="result-panel" id="resultPanel">
+            <div class="empty-state">
+                <div class="icon">🔍</div>
+                <p>Point camera at chart and tap Start</p>
             </div>
-            <div class="patterns" id="patterns"></div>
-            <div class="debug" id="debug">Debug info will appear here...</div>
         </div>
-        
-        <button class="btn start" id="scanBtn" onclick="toggleScan()">Start Scanning</button>
+        <div class="scan-btn-area">
+            <button class="scan-btn start" id="scanBtn" onclick="toggleScan()">
+                <span id="btnIcon">▶</span>
+                <span id="btnText">Start Scanning</span>
+            </button>
+        </div>
     </div>
 
 <script>
 var scanning = false;
 var stream = null;
-var video, canvas, ctx;
+var history = [];
+var HISTORY_SIZE = 10;
+var video, canvas, ctx, overlay, resultPanel, liveBadge, scanBtn, btnIcon, btnText;
+
+function showScanner() {
+    document.getElementById('introPage').classList.add('hidden');
+    document.getElementById('scannerPage').classList.add('active');
+}
+
+function showIntro() {
+    stopScan();
+    document.getElementById('scannerPage').classList.remove('active');
+    document.getElementById('introPage').classList.remove('hidden');
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     video = document.getElementById('video');
     canvas = document.getElementById('canvas');
     ctx = canvas.getContext('2d', { willReadFrequently: true });
+    overlay = document.getElementById('overlay');
+    resultPanel = document.getElementById('resultPanel');
+    liveBadge = document.getElementById('liveBadge');
+    scanBtn = document.getElementById('scanBtn');
+    btnIcon = document.getElementById('btnIcon');
+    btnText = document.getElementById('btnText');
 });
 
 function toggleScan() {
@@ -85,9 +184,13 @@ function startScan() {
         stream = s;
         video.srcObject = stream;
         scanning = true;
-        document.getElementById('liveBadge').style.display = 'block';
-        document.getElementById('scanBtn').className = 'btn stop';
-        document.getElementById('scanBtn').textContent = 'Stop Scanning';
+        history = [];
+        overlay.classList.add('active');
+        liveBadge.style.display = 'block';
+        scanBtn.className = 'scan-btn stop';
+        btnIcon.textContent = '⏹';
+        btnText.textContent = 'Stop Scanning';
+        resultPanel.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Analyzing chart...</p></div>';
         analyze();
     }).catch(function(e) {
         alert('Camera error: ' + e.message);
@@ -97,9 +200,11 @@ function startScan() {
 function stopScan() {
     scanning = false;
     if (stream) stream.getTracks().forEach(function(t) { t.stop(); });
-    document.getElementById('liveBadge').style.display = 'none';
-    document.getElementById('scanBtn').className = 'btn start';
-    document.getElementById('scanBtn').textContent = 'Start Scanning';
+    overlay.classList.remove('active');
+    liveBadge.style.display = 'none';
+    scanBtn.className = 'scan-btn start';
+    btnIcon.textContent = '▶';
+    btnText.textContent = 'Start Scanning';
 }
 
 function analyze() {
@@ -111,153 +216,92 @@ function analyze() {
         ctx.drawImage(video, 0, 0);
         
         var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        var result = detectColors(imgData);
+        var result = analyzeChart(imgData);
         
-        // Update display
-        document.getElementById('greenCount').textContent = result.green;
-        document.getElementById('redCount').textContent = result.red;
+        history.push(result);
+        if (history.length > HISTORY_SIZE) history.shift();
         
-        var dirEl = document.getElementById('direction');
-        if (result.green > result.red) {
-            dirEl.textContent = '📈 BULLISH';
-            dirEl.className = 'direction bullish';
-        } else if (result.red > result.green) {
-            dirEl.textContent = '📉 BEARISH';
-            dirEl.className = 'direction bearish';
-        } else {
-            dirEl.textContent = '📊 NEUTRAL';
-            dirEl.className = 'direction neutral';
+        if (history.length >= 3) {
+            var stable = getStableResult();
+            renderResult(stable);
         }
-        
-        // Patterns
-        var patsHTML = '';
-        result.patterns.forEach(function(p) {
-            patsHTML += '<span class="pat ' + p.type + '">' + p.icon + ' ' + p.name + '</span>';
-        });
-        document.getElementById('patterns').innerHTML = patsHTML || '<span style="color:#666">No patterns</span>';
-        
-        // Debug
-        document.getElementById('debug').innerHTML = result.debug;
     }
     
-    setTimeout(analyze, 200);
+    setTimeout(analyze, 300);
 }
 
-function detectColors(imgData) {
+function getStableResult() {
+    var bullishVotes = 0;
+    var bearishVotes = 0;
+    var totalGreen = 0;
+    var totalRed = 0;
+    var allPatterns = [];
+    var lastDebug = history[history.length - 1].debug;
+    
+    history.forEach(function(h) {
+        if (h.green > h.red) bullishVotes++;
+        else if (h.red > h.green) bearishVotes++;
+        totalGreen += h.green;
+        totalRed += h.red;
+        allPatterns = allPatterns.concat(h.patterns);
+    });
+    
+    var avgGreen = Math.round(totalGreen / history.length);
+    var avgRed = Math.round(totalRed / history.length);
+    
+    var direction, confidence;
+    if (bullishVotes > bearishVotes) {
+        direction = 'bullish';
+        confidence = Math.round((bullishVotes / history.length) * 100);
+    } else if (bearishVotes > bullishVotes) {
+        direction = 'bearish';
+        confidence = Math.round((bearishVotes / history.length) * 100);
+    } else {
+        direction = avgGreen >= avgRed ? 'bullish' : 'bearish';
+        confidence = 50;
+    }
+    
+    // Get most common patterns
+    var patternCounts = {};
+    allPatterns.forEach(function(p) {
+        patternCounts[p.name] = (patternCounts[p.name] || 0) + 1;
+    });
+    
+    var stablePatterns = [];
+    for (var name in patternCounts) {
+        if (patternCounts[name] >= 2) {
+            var found = allPatterns.find(function(p) { return p.name === name; });
+            if (found) stablePatterns.push(found);
+        }
+    }
+    
+    return {
+        direction: direction,
+        confidence: Math.min(95, confidence),
+        green: avgGreen,
+        red: avgRed,
+        patterns: stablePatterns.slice(0, 3),
+        votes: { bullish: bullishVotes, bearish: bearishVotes },
+        debug: lastDebug
+    };
+}
+
+function analyzeChart(imgData) {
     var data = imgData.data;
     var w = imgData.width;
     var h = imgData.height;
     
     var top = Math.floor(h * 0.1);
     var bot = Math.floor(h * 0.85);
-    var left = Math.floor(w * 0.08);
-    var right = Math.floor(w * 0.92);
-    
-    var greenPixels = 0;
-    var redPixels = 0;
-    var greenSamples = [];
-    var redSamples = [];
-    
-    var step = 3;
-    for (var y = top; y < bot; y += step) {
-        for (var x = left; x < right; x += step) {
-            var i = (y * w + x) * 4;
-            var r = data[i];
-            var g = data[i + 1];
-            var b = data[i + 2];
-            
-            var brightness = (r + g + b) / 3;
-            if (brightness > 245 || brightness < 10) continue;
-            
-            var maxC = Math.max(r, g, b);
-            var minC = Math.min(r, g, b);
-            var saturation = maxC - minC;
-            if (saturation < 40) continue;
-            
-            var isGreen = false;
-            var isRed = false;
-            
-            // ========== GREEN DETECTION ==========
-            // Must be GREEN not BLUE! G must be higher than B or close
-            
-            // MT5 bright green: (66,145,26) - G is highest, B is very low
-            if (g > 100 && g > r * 1.3 && g > b * 1.3 && b < 100) {
-                isGreen = true;
-            }
-            
-            // TradingView teal: (38,166,154) - G highest, B close but R very low
-            if (r < 80 && g > 100 && g >= b && b > 80) {
-                isGreen = true;
-            }
-            
-            // General green: G is clearly dominant, not blue
-            if (g > r + 30 && g > b && g > 80 && b < g) {
-                isGreen = true;
-            }
-            
-            // EXCLUDE BLUE (MACD lines etc): B is highest
-            if (b > g && b > r && b > 100) {
-                isGreen = false;
-            }
-            
-            // ========== RED DETECTION ==========
-            // Real red: R is HIGH, G and B are LOW (under 110)
-            
-            // Strict red: G and B must be low
-            if (r > 150 && g < 110 && b < 110 && r > g + 50) {
-                isRed = true;
-            }
-            
-            // MT5 red on black
-            if (r > 120 && g < 80 && b < 80 && r > g * 2) {
-                isRed = true;
-            }
-            
-            // EXCLUDE pink/salmon: G or B is too high
-            if (g > 110 || b > 110) {
-                isRed = false;
-            }
-            
-            if (isGreen && !isRed) {
-                greenPixels++;
-                if (greenSamples.length < 5 && Math.random() < 0.01) {
-                    greenSamples.push('(' + r + ',' + g + ',' + b + ')');
-                }
-            }
-            if (isRed && !isGreen) {
-                redPixels++;
-                if (redSamples.length < 5 && Math.random() < 0.01) {
-                    redSamples.push('(' + r + ',' + g + ',' + b + ')');
-                }
-            }
-        }
-    }
-    
-    var candles = groupIntoCandles(imgData, top, bot, left, right);
-    var patterns = detectPatterns(candles);
-    
-    var debug = 'Pixels - Green: ' + greenPixels + ', Red: ' + redPixels + '<br>';
-    debug += 'Candles: ' + candles.length + ' (G:' + candles.filter(function(c){return c.type==='green';}).length + ' R:' + candles.filter(function(c){return c.type==='red';}).length + ')<br>';
-    debug += 'Green: ' + greenSamples.join(' ') + '<br>';
-    debug += 'Red: ' + redSamples.join(' ');
-    
-    return {
-        green: candles.filter(function(c) { return c.type === 'green'; }).length,
-        red: candles.filter(function(c) { return c.type === 'red'; }).length,
-        patterns: patterns,
-        debug: debug
-    };
-}
-
-function groupIntoCandles(imgData, top, bot, left, right) {
-    var data = imgData.data;
-    var w = imgData.width;
-    var h = imgData.height;
+    var left = Math.floor(w * 0.05);
+    var right = Math.floor(w * 0.95);
     var scanW = right - left;
     var scanH = bot - top;
     
     var columns = [];
     var step = Math.max(1, Math.floor(scanW / 300));
+    var greenPxTotal = 0, redPxTotal = 0;
+    var greenSamples = [], redSamples = [];
     
     for (var x = left; x < right; x += step) {
         var greenPx = 0, redPx = 0;
@@ -270,73 +314,77 @@ function groupIntoCandles(imgData, top, bot, left, right) {
             if (brightness > 245 || brightness < 10) continue;
             
             var saturation = Math.max(r,g,b) - Math.min(r,g,b);
-            if (saturation < 40) continue;
+            if (saturation < 35) continue;
             
+            // GREEN detection
             var isGreen = false;
+            if (g > 80 && g > r * 1.2 && g > b) isGreen = true;
+            if (g > 100 && g > r + 20 && b < g) isGreen = true;
+            if (r < 100 && g > 80 && b > 80 && g >= b && (g + b) > r * 2) isGreen = true;
+            if (b > g && b > r) isGreen = false; // Exclude blue
+            
+            // RED detection
             var isRed = false;
+            if (r > 140 && g < 110 && b < 110 && r > g + 40) isRed = true;
+            if (r > 100 && g < 70 && b < 70 && r > g * 1.8) isRed = true;
+            if (g > 120 || b > 120) isRed = false; // Exclude pink
             
-            // GREEN (exclude blue)
-            if (g > 100 && g > r * 1.3 && g > b * 1.3 && b < 100) isGreen = true;
-            if (r < 80 && g > 100 && g >= b && b > 80) isGreen = true;
-            if (g > r + 30 && g > b && g > 80 && b < g) isGreen = true;
-            if (b > g && b > r && b > 100) isGreen = false;
-            
-            // RED (strict - exclude pink)
-            if (r > 150 && g < 110 && b < 110 && r > g + 50) isRed = true;
-            if (r > 120 && g < 80 && b < 80 && r > g * 2) isRed = true;
-            if (g > 110 || b > 110) isRed = false;
-            
-            if (isGreen && !isRed) greenPx++;
-            else if (isRed && !isGreen) redPx++;
+            if (isGreen && !isRed) {
+                greenPx++;
+                greenPxTotal++;
+                if (greenSamples.length < 3 && Math.random() < 0.005) {
+                    greenSamples.push('(' + r + ',' + g + ',' + b + ')');
+                }
+            }
+            else if (isRed && !isGreen) {
+                redPx++;
+                redPxTotal++;
+                if (redSamples.length < 3 && Math.random() < 0.005) {
+                    redSamples.push('(' + r + ',' + g + ',' + b + ')');
+                }
+            }
         }
         
-        var minPx = Math.max(2, Math.floor(scanH * 0.003));
-        if (greenPx > minPx && greenPx > redPx) {
+        var minPx = Math.max(3, Math.floor(scanH * 0.004));
+        if (greenPx > minPx && greenPx > redPx * 1.2) {
             columns.push({ x: x, type: 'green' });
-        } else if (redPx > minPx && redPx > greenPx) {
+        } else if (redPx > minPx && redPx > greenPx * 1.2) {
             columns.push({ x: x, type: 'red' });
         }
     }
     
+    // Group columns into candles
     var candles = [];
-    if (columns.length === 0) return candles;
-    
-    var cur = { type: columns[0].type, x: columns[0].x };
-    var minGap = Math.floor(scanW / 100);
-    
-    for (var i = 1; i < columns.length; i++) {
-        var c = columns[i];
-        var gap = c.x - cur.x;
+    if (columns.length > 0) {
+        var cur = { type: columns[0].type, x: columns[0].x };
+        var minGap = Math.floor(scanW / 80);
         
-        if (gap <= minGap && c.type === cur.type) {
-            cur.x = c.x;
-        } else {
-            candles.push({ type: cur.type });
-            cur = { type: c.type, x: c.x };
+        for (var i = 1; i < columns.length; i++) {
+            var c = columns[i];
+            if (c.x - cur.x <= minGap && c.type === cur.type) {
+                cur.x = c.x;
+            } else {
+                candles.push({ type: cur.type });
+                cur = { type: c.type, x: c.x };
+            }
+        }
+        candles.push({ type: cur.type });
+    }
+    
+    var greenCandles = candles.filter(function(c) { return c.type === 'green'; }).length;
+    var redCandles = candles.filter(function(c) { return c.type === 'red'; }).length;
+    
+    // Detect patterns
+    var patterns = [];
+    if (candles.length >= 3) {
+        var last3 = candles.slice(-3);
+        if (last3[0].type === 'green' && last3[1].type === 'green' && last3[2].type === 'green') {
+            patterns.push({ name: '3 White Soldiers', type: 'bullish', icon: '👨‍👨‍👦' });
+        }
+        if (last3[0].type === 'red' && last3[1].type === 'red' && last3[2].type === 'red') {
+            patterns.push({ name: '3 Black Crows', type: 'bearish', icon: '🐦‍⬛' });
         }
     }
-    candles.push({ type: cur.type });
-    
-    return candles;
-}
-
-function detectPatterns(candles) {
-    var patterns = [];
-    if (candles.length < 3) return patterns;
-    
-    var last3 = candles.slice(-3);
-    
-    // 3 White Soldiers
-    if (last3[0].type === 'green' && last3[1].type === 'green' && last3[2].type === 'green') {
-        patterns.push({ name: '3 White Soldiers', type: 'bullish', icon: '👨‍👨‍👦' });
-    }
-    
-    // 3 Black Crows
-    if (last3[0].type === 'red' && last3[1].type === 'red' && last3[2].type === 'red') {
-        patterns.push({ name: '3 Black Crows', type: 'bearish', icon: '🐦‍⬛' });
-    }
-    
-    // Bullish Engulfing (simplified)
     if (candles.length >= 2) {
         var prev = candles[candles.length - 2];
         var last = candles[candles.length - 1];
@@ -348,7 +396,65 @@ function detectPatterns(candles) {
         }
     }
     
-    return patterns;
+    return {
+        green: greenCandles,
+        red: redCandles,
+        patterns: patterns,
+        debug: {
+            greenPx: greenPxTotal,
+            redPx: redPxTotal,
+            greenSamples: greenSamples,
+            redSamples: redSamples,
+            totalCandles: candles.length
+        }
+    };
+}
+
+function renderResult(r) {
+    var icon = r.direction === 'bullish' ? '📈' : '📉';
+    var label = r.direction === 'bullish' ? 'BULLISH' : 'BEARISH';
+    var nextDir = r.direction === 'bullish' ? 'UP ↗️' : 'DOWN ↘️';
+    var action = r.direction === 'bullish' ? 'BUY' : 'SELL';
+    var actionClass = r.direction === 'bullish' ? 'buy' : 'sell';
+    
+    var reason = r.patterns.length > 0 ? r.patterns[0].name : (r.direction === 'bullish' ? 'Bullish momentum' : 'Bearish momentum');
+    
+    var patternsHTML = '';
+    if (r.patterns.length > 0) {
+        r.patterns.forEach(function(p) {
+            patternsHTML += '<span class="chip ' + p.type + '">' + p.icon + ' ' + p.name + '</span>';
+        });
+    } else {
+        patternsHTML = '<span style="color:#666">No patterns detected</span>';
+    }
+    
+    var debugHTML = '';
+    if (r.debug) {
+        debugHTML = '<div class="debug-box">' +
+            'Candles: G:' + r.green + ' R:' + r.red + '<br>' +
+            'Votes: Bull:' + r.votes.bullish + ' Bear:' + r.votes.bearish + ' (of ' + history.length + ')<br>' +
+            'Pixels: G:' + r.debug.greenPx + ' R:' + r.debug.redPx + '<br>' +
+            'Green: ' + r.debug.greenSamples.join(' ') + '<br>' +
+            'Red: ' + r.debug.redSamples.join(' ') +
+        '</div>';
+    }
+    
+    resultPanel.innerHTML = 
+        '<div class="signal-card">' +
+            '<div class="signal-icon">' + icon + '</div>' +
+            '<div class="signal-dir ' + r.direction + '">' + label + '</div>' +
+            '<div class="signal-conf">' + r.confidence + '% confidence</div>' +
+        '</div>' +
+        '<div class="prediction-card ' + r.direction + '">' +
+            '<div class="icon">🎯</div>' +
+            '<div class="text"><strong>NEXT: Likely ' + nextDir + '</strong><span>' + reason + '</span></div>' +
+            '<div class="action ' + actionClass + '">' + action + '</div>' +
+        '</div>' +
+        '<div class="patterns-card">' +
+            '<div class="patterns-header">🕯️ Patterns detected</div>' +
+            '<div class="pattern-chips">' + patternsHTML + '</div>' +
+        '</div>' +
+        debugHTML;
 }
 </script>
 </body>
