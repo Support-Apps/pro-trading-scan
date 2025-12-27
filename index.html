@@ -305,7 +305,7 @@ function detectCandles(imgData) {
     var scanW = right - left;
     
     var columns = [];
-    var step = Math.max(1, Math.floor(scanW / 250));
+    var step = Math.max(1, Math.floor(scanW / 300));
     
     for (var x = left; x < right; x += step) {
         var greenPx = 0, redPx = 0;
@@ -317,43 +317,62 @@ function detectCandles(imgData) {
             var r = data[i], g = data[i+1], b = data[i+2];
             var brightness = (r + g + b) / 3;
             
-            // Skip white/black
-            if (brightness > 240 || brightness < 20) continue;
+            // Skip white/black/gray
+            if (brightness > 235 || brightness < 25) continue;
+            var saturation = Math.max(r,g,b) - Math.min(r,g,b);
+            if (saturation < 25) continue; // Skip gray
             
             // ===== GREEN/TEAL DETECTION =====
-            // TradingView teal: rgb(38, 166, 154)
-            // Key: G is high, B is also high, R is low
             var isGreen = false;
             
-            // Teal: G and B both much higher than R
-            if (g > r + 30 && b > r + 20 && g > 100) isGreen = true;
+            // Method 1: Teal (TradingView) - G and B both higher than R
+            if (g > r && b > r && (g + b) > r * 2.5 && g > 60) {
+                isGreen = true;
+            }
             
-            // Standard green: G dominant
-            if (g > r + 40 && g > b + 20 && g > 100) isGreen = true;
+            // Method 2: Pure green - G clearly dominant
+            if (g > r + 20 && g > b && g > 70) {
+                isGreen = true;
+            }
             
-            // Bright green/lime
-            if (g > 150 && g > r * 2 && g > b) isGreen = true;
+            // Method 3: Any greenish - G is the max channel
+            if (g >= r && g >= b && g > 80 && (g - r > 15 || (b > r && g > 100))) {
+                isGreen = true;
+            }
             
-            // Cyan-green
-            if (g > 120 && b > 100 && r < 80 && g >= b * 0.8) isGreen = true;
+            // Method 4: Cyan/Turquoise
+            if (g > 100 && b > 100 && r < 100 && Math.abs(g - b) < 50) {
+                isGreen = true;
+            }
             
             // ===== RED DETECTION =====
-            // TradingView red: rgb(239, 83, 80)
-            // Key: R is very high, G and B are low
             var isRed = false;
             
-            // Standard red: R much higher than G and B
-            if (r > g + 50 && r > b + 50 && r > 120) isRed = true;
+            // Method 1: Pure red - R clearly dominant
+            if (r > g + 30 && r > b + 20 && r > 80) {
+                isRed = true;
+            }
             
-            // Coral/salmon red
-            if (r > 180 && r > g * 1.8 && r > b * 1.8) isRed = true;
+            // Method 2: Coral/Orange-red (TradingView)
+            if (r > 150 && r > g * 1.5 && r > b * 1.5) {
+                isRed = true;
+            }
             
-            // Dark red
-            if (r > 100 && r > g * 2 && r > b * 2 && g < 100) isRed = true;
+            // Method 3: Any reddish - R is the max channel
+            if (r >= g && r >= b && r > 80 && r - g > 25) {
+                isRed = true;
+            }
             
-            // Resolve conflict
+            // Method 4: Dark red
+            if (r > 60 && r > g * 1.8 && r > b * 1.5 && g < 100) {
+                isRed = true;
+            }
+            
+            // Resolve conflict - pick stronger color
             if (isGreen && isRed) {
-                if ((g + b) - r > r - (g + b) / 2) isRed = false;
+                var greenScore = (g - r) + (g > b ? g - b : 0);
+                var redScore = (r - g) + (r - b);
+                if (greenScore > redScore) isRed = false;
                 else isGreen = false;
             }
             
@@ -369,10 +388,10 @@ function detectCandles(imgData) {
             }
         }
         
-        var minPx = Math.floor(scanH * 0.008);
-        if (greenPx > minPx && greenPx > redPx * 1.2) {
+        var minPx = Math.max(3, Math.floor(scanH * 0.005));
+        if (greenPx > minPx && greenPx > redPx * 1.1) {
             columns.push({ x: x, type: 'green', top: greenTop, bot: greenBot });
-        } else if (redPx > minPx && redPx > greenPx * 1.2) {
+        } else if (redPx > minPx && redPx > greenPx * 1.1) {
             columns.push({ x: x, type: 'red', top: redTop, bot: redBot });
         }
     }
@@ -382,7 +401,7 @@ function detectCandles(imgData) {
     if (columns.length === 0) return candles;
     
     var cur = { x: columns[0].x, type: columns[0].type, top: columns[0].top, bot: columns[0].bot, n: 1 };
-    var minGap = Math.max(2, Math.floor(scanW / 80));
+    var minGap = Math.max(2, Math.floor(scanW / 100));
     
     for (var i = 1; i < columns.length; i++) {
         var c = columns[i];
@@ -595,7 +614,7 @@ function renderResults(r) {
             '<div class="signal-icon ' + r.dir + '">' + icons[r.dir] + '</div>' +
             '<div class="signal-info">' +
                 '<div class="direction ' + r.dir + '">' + labels[r.dir] + '</div>' +
-                '<div class="meta">' + r.greenCount + ' green · ' + r.redCount + ' red</div>' +
+                '<div class="meta">Based on recent candles analysis</div>' +
             '</div>' +
             '<div class="signal-conf">' +
                 '<div class="num ' + r.dir + '">' + r.conf + '%</div>' +
