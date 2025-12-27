@@ -26,14 +26,14 @@
         .intro-header p { color: var(--dim); font-size: 0.9em; margin-top: 4px; }
         .intro-card { background: var(--card); border-radius: 16px; padding: 20px; margin-bottom: 12px; border: 1px solid var(--border); }
         .intro-card h3 { font-size: 1em; margin-bottom: 12px; }
-        .intro-card p { color: var(--dim); font-size: 0.85em; line-height: 1.6; }
+        .intro-card p { color: var(--dim); font-size: 0.85em; line-height: 1.6; margin-bottom: 8px; }
         .pattern-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
         .tag { padding: 6px 10px; border-radius: 8px; font-size: 0.75em; font-weight: 600; }
         .tag.green { background: rgba(14,203,129,0.15); color: var(--green); }
         .tag.red { background: rgba(246,70,93,0.15); color: var(--red); }
         .tag.gold { background: rgba(240,185,11,0.15); color: var(--gold); }
         .disclaimer { background: rgba(246,70,93,0.08); border: 1px solid rgba(246,70,93,0.2); border-radius: 12px; padding: 14px; }
-        .disclaimer p { font-size: 0.8em; color: var(--dim); }
+        .disclaimer p { font-size: 0.8em; color: var(--dim); margin: 0; }
         .intro-btn-wrap { position: fixed; bottom: 0; left: 0; right: 0; padding: 16px 20px 28px; background: linear-gradient(0deg, var(--bg) 70%, transparent); }
         .intro-btn { width: 100%; padding: 16px; border: none; border-radius: 14px; font-size: 1em; font-weight: 700; cursor: pointer; background: linear-gradient(135deg, var(--gold), #D4A017); color: #000; }
         
@@ -148,13 +148,13 @@
         </div>
         <div class="intro-card">
             <h3>📚 Pattern Meanings</h3>
-            <p><strong>3 White Soldiers</strong> - 3 consecutive green candles rising. Strong bullish signal - price likely to continue up.</p>
-            <p style="margin-top:8px"><strong>3 Black Crows</strong> - 3 consecutive red candles falling. Strong bearish signal - price likely to continue down.</p>
-            <p style="margin-top:8px"><strong>Engulfing</strong> - Current candle completely covers previous one. Signals trend reversal.</p>
-            <p style="margin-top:8px"><strong>Morning/Evening Star</strong> - 3-candle reversal pattern at bottom/top of trend.</p>
+            <p><strong>3 White Soldiers</strong> - 3 consecutive green candles rising. Strong bullish signal.</p>
+            <p><strong>3 Black Crows</strong> - 3 consecutive red candles falling. Strong bearish signal.</p>
+            <p><strong>Engulfing</strong> - Current candle completely covers previous. Signals reversal.</p>
+            <p><strong>Morning/Evening Star</strong> - 3-candle reversal pattern.</p>
         </div>
         <div class="disclaimer">
-            <p>⚠️ <strong>Risk Warning:</strong> This is an educational tool only. Pattern recognition is ONE factor in trading decisions. Always use stop-losses, manage risk, and never trade money you can't afford to lose.</p>
+            <p>⚠️ <strong>Risk Warning:</strong> Educational tool only. Not financial advice. Always use stop-losses and manage risk.</p>
         </div>
         <div class="intro-btn-wrap">
             <button class="intro-btn" onclick="showScanner()">→ Open Scanner</button>
@@ -200,6 +200,7 @@
 var scanning = false;
 var stream = null;
 var animId = null;
+var resultsHistory = [];
 var video, canvas, ctx, placeholder, overlay, dataPanel, liveBadge, scanBtn, btnIcon, btnText;
 
 function showScanner() {
@@ -240,12 +241,14 @@ function startScan() {
         video.classList.add('active');
         video.onloadedmetadata = function() {
             scanning = true;
+            resultsHistory = [];
             placeholder.classList.add('hidden');
             overlay.classList.add('active');
             liveBadge.classList.add('active');
             scanBtn.className = 'scan-btn stop';
             btnIcon.textContent = '⏹';
             btnText.textContent = 'Stop Scanning';
+            dataPanel.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Analyzing chart...</p></div>';
             animId = requestAnimationFrame(analyzeLoop);
         };
     }).catch(function(e) {
@@ -255,6 +258,7 @@ function startScan() {
 
 function stopScan() {
     scanning = false;
+    resultsHistory = [];
     if (animId) cancelAnimationFrame(animId);
     if (stream) stream.getTracks().forEach(function(t) { t.stop(); });
     video.srcObject = null;
@@ -271,7 +275,7 @@ var frameCount = 0;
 function analyzeLoop() {
     if (!scanning) return;
     frameCount++;
-    if (frameCount % 5 === 0) doAnalysis();
+    if (frameCount % 6 === 0) doAnalysis();
     animId = requestAnimationFrame(analyzeLoop);
 }
 
@@ -285,27 +289,79 @@ function doAnalysis() {
     
     if (candles.length >= 3) {
         var result = analyzeCandles(candles);
-        renderResults(result);
+        resultsHistory.push(result);
+        if (resultsHistory.length > 5) resultsHistory.shift();
+        
+        // Only show result after we have at least 3 analyses
+        if (resultsHistory.length >= 3) {
+            var stableResult = getMostCommonResult(resultsHistory);
+            renderResults(stableResult);
+        } else {
+            dataPanel.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Analyzing... (' + resultsHistory.length + '/3)</p></div>';
+        }
     } else {
         dataPanel.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>Looking for candles...<br>Point camera at chart</p></div>';
     }
 }
 
+function getMostCommonResult(history) {
+    var bullishCount = 0;
+    var bearishCount = 0;
+    
+    history.forEach(function(r) {
+        if (r.dir === 'bullish') bullishCount++;
+        else if (r.dir === 'bearish') bearishCount++;
+    });
+    
+    // Return the most recent result but with stable direction
+    var lastResult = history[history.length - 1];
+    var stableDir = bullishCount >= bearishCount ? 'bullish' : 'bearish';
+    
+    // Override direction with stable one
+    lastResult.dir = stableDir;
+    lastResult.conf = Math.round((Math.max(bullishCount, bearishCount) / history.length) * 100);
+    
+    // Update prediction based on stable direction
+    if (stableDir === 'bullish') {
+        lastResult.prediction = {
+            dir: 'bullish',
+            title: 'Likely UP ↗️',
+            reason: 'Bullish trend detected',
+            action: 'BUY',
+            cls: 'buy'
+        };
+    } else {
+        lastResult.prediction = {
+            dir: 'bearish',
+            title: 'Likely DOWN ↘️',
+            reason: 'Bearish trend detected',
+            action: 'SELL',
+            cls: 'sell'
+        };
+    }
+    
+    return lastResult;
+}
+
 // ===================== CANDLE DETECTION =====================
+// Based on TradingView colors from the image:
+// GREEN/TEAL candles: rgb(38, 166, 154) - teal/turquoise
+// RED candles: rgb(239, 83, 80) - coral red
+
 function detectCandles(imgData) {
     var data = imgData.data;
     var w = imgData.width;
     var h = imgData.height;
     
-    var top = Math.floor(h * 0.08);
-    var bot = Math.floor(h * 0.88);
-    var left = Math.floor(w * 0.05);
-    var right = Math.floor(w * 0.95);
+    var top = Math.floor(h * 0.1);
+    var bot = Math.floor(h * 0.85);
+    var left = Math.floor(w * 0.08);
+    var right = Math.floor(w * 0.92);
     var scanH = bot - top;
     var scanW = right - left;
     
     var columns = [];
-    var step = Math.max(1, Math.floor(scanW / 300));
+    var step = Math.max(1, Math.floor(scanW / 350));
     
     for (var x = left; x < right; x += step) {
         var greenPx = 0, redPx = 0;
@@ -315,65 +371,81 @@ function detectCandles(imgData) {
         for (var y = top; y < bot; y++) {
             var i = (y * w + x) * 4;
             var r = data[i], g = data[i+1], b = data[i+2];
+            
+            // Skip very bright (white) or very dark (black)
             var brightness = (r + g + b) / 3;
+            if (brightness > 230 || brightness < 30) continue;
             
-            // Skip white/black/gray
-            if (brightness > 235 || brightness < 25) continue;
-            var saturation = Math.max(r,g,b) - Math.min(r,g,b);
-            if (saturation < 25) continue; // Skip gray
+            // Skip gray pixels (no color)
+            var maxC = Math.max(r, g, b);
+            var minC = Math.min(r, g, b);
+            var saturation = maxC - minC;
+            if (saturation < 30) continue;
             
-            // ===== GREEN/TEAL DETECTION =====
+            // ===== GREEN DETECTION - ALL SHADES =====
+            // 1. Lime/Bright green: high G, low R and B
+            // 2. Dark green: medium G, very low R and B
+            // 3. Teal/Turquoise: high G and B, low R
+            // 4. Standard green: G is clearly the highest
+            // 5. Forest green: darker, G > R and G > B
+            
             var isGreen = false;
             
-            // Method 1: Teal (TradingView) - G and B both higher than R
-            if (g > r && b > r && (g + b) > r * 2.5 && g > 60) {
+            // ANY pixel where G is the dominant channel
+            if (g > r && g > b && g > 50) {
                 isGreen = true;
             }
             
-            // Method 2: Pure green - G clearly dominant
-            if (g > r + 20 && g > b && g > 70) {
+            // Teal: G and B both higher than R (TradingView style)
+            if (g > r && b > r && g > 70 && b > 60) {
                 isGreen = true;
             }
             
-            // Method 3: Any greenish - G is the max channel
-            if (g >= r && g >= b && g > 80 && (g - r > 15 || (b > r && g > 100))) {
+            // Lime/Bright green
+            if (g > 150 && g > r * 1.5 && g > b * 1.3) {
                 isGreen = true;
             }
             
-            // Method 4: Cyan/Turquoise
-            if (g > 100 && b > 100 && r < 100 && Math.abs(g - b) < 50) {
+            // Dark green
+            if (g > 40 && g > r * 1.5 && g > b * 1.3 && r < 100) {
+                isGreen = true;
+            }
+            
+            // Cyan-ish green
+            if (g > 80 && b > 80 && r < 80) {
                 isGreen = true;
             }
             
             // ===== RED DETECTION =====
+            // Red doesn't change much - R is always dominant
+            
             var isRed = false;
             
-            // Method 1: Pure red - R clearly dominant
-            if (r > g + 30 && r > b + 20 && r > 80) {
+            // Standard red: R clearly highest
+            if (r > g && r > b && r > 80 && (r - g) > 20) {
                 isRed = true;
             }
             
-            // Method 2: Coral/Orange-red (TradingView)
-            if (r > 150 && r > g * 1.5 && r > b * 1.5) {
+            // Coral red (TradingView)
+            if (r > 150 && r > g * 1.4 && r > b * 1.4) {
                 isRed = true;
             }
             
-            // Method 3: Any reddish - R is the max channel
-            if (r >= g && r >= b && r > 80 && r - g > 25) {
+            // Dark red
+            if (r > 60 && r > g * 1.8 && r > b * 1.5) {
                 isRed = true;
             }
             
-            // Method 4: Dark red
-            if (r > 60 && r > g * 1.8 && r > b * 1.5 && g < 100) {
-                isRed = true;
-            }
-            
-            // Resolve conflict - pick stronger color
+            // ===== CONFLICT RESOLUTION =====
             if (isGreen && isRed) {
-                var greenScore = (g - r) + (g > b ? g - b : 0);
-                var redScore = (r - g) + (r - b);
-                if (greenScore > redScore) isRed = false;
-                else isGreen = false;
+                // Calculate color scores
+                var greenScore = g + b - r;
+                var redScore = r - g - b/2;
+                if (greenScore > redScore) {
+                    isRed = false;
+                } else {
+                    isGreen = false;
+                }
             }
             
             if (isGreen) {
@@ -388,11 +460,13 @@ function detectCandles(imgData) {
             }
         }
         
-        var minPx = Math.max(3, Math.floor(scanH * 0.005));
-        if (greenPx > minPx && greenPx > redPx * 1.1) {
-            columns.push({ x: x, type: 'green', top: greenTop, bot: greenBot });
-        } else if (redPx > minPx && redPx > greenPx * 1.1) {
-            columns.push({ x: x, type: 'red', top: redTop, bot: redBot });
+        // Lower threshold to catch more candles
+        var minPx = Math.max(2, Math.floor(scanH * 0.004));
+        
+        if (greenPx > minPx && greenPx > redPx) {
+            columns.push({ x: x, type: 'green', top: greenTop, bot: greenBot, px: greenPx });
+        } else if (redPx > minPx && redPx > greenPx) {
+            columns.push({ x: x, type: 'red', top: redTop, bot: redBot, px: redPx });
         }
     }
     
@@ -401,84 +475,63 @@ function detectCandles(imgData) {
     if (columns.length === 0) return candles;
     
     var cur = { x: columns[0].x, type: columns[0].type, top: columns[0].top, bot: columns[0].bot, n: 1 };
-    var minGap = Math.max(2, Math.floor(scanW / 100));
+    var minGap = Math.max(2, Math.floor(scanW / 120));
     
     for (var i = 1; i < columns.length; i++) {
         var c = columns[i];
         var gap = c.x - cur.x;
         
-        if (gap < minGap && c.type === cur.type) {
+        if (gap <= minGap && c.type === cur.type) {
             cur.top = Math.min(cur.top, c.top);
             cur.bot = Math.max(cur.bot, c.bot);
             cur.n++;
         } else {
-            if (cur.n >= 1) candles.push({ type: cur.type, top: cur.top, bot: cur.bot });
+            candles.push({ type: cur.type, height: cur.bot - cur.top });
             cur = { x: c.x, type: c.type, top: c.top, bot: c.bot, n: 1 };
         }
     }
-    if (cur.n >= 1) candles.push({ type: cur.type, top: cur.top, bot: cur.bot });
+    candles.push({ type: cur.type, height: cur.bot - cur.top });
     
     return candles;
 }
 
 // ===================== ANALYZE CANDLES =====================
 function analyzeCandles(candles) {
-    // Find last trend change
-    var trendStart = 0;
-    if (candles.length > 5) {
-        for (var i = candles.length - 1; i >= 3; i--) {
-            var curr = candles[i].type;
-            var prev1 = candles[i-1].type;
-            var prev2 = candles[i-2].type;
-            var prev3 = candles[i-3].type;
-            
-            // Look for trend change: 3 same color followed by different
-            if (prev1 === prev2 && prev2 === prev3 && curr !== prev1) {
-                trendStart = i;
-                break;
-            }
-        }
-    }
-    
-    // Get candles from trend change to end
-    var relevantCandles = candles.slice(trendStart);
-    if (relevantCandles.length > 30) relevantCandles = relevantCandles.slice(-30);
-    
-    // Count colors
-    var greenCount = 0, redCount = 0;
-    relevantCandles.forEach(function(c) {
-        if (c.type === 'green') greenCount++;
-        else redCount++;
+    // Count all candles
+    var totalGreen = 0, totalRed = 0;
+    candles.forEach(function(c) {
+        if (c.type === 'green') totalGreen++;
+        else totalRed++;
     });
     
-    // Last 5 candles for pattern detection
-    var last5 = relevantCandles.slice(-5);
+    // Get last 10 for trend
+    var last10 = candles.slice(-10);
+    var last10Green = last10.filter(function(c) { return c.type === 'green'; }).length;
+    var last10Red = last10.filter(function(c) { return c.type === 'red'; }).length;
+    
+    // Get last 5 for patterns
+    var last5 = candles.slice(-5);
     var patterns = detectPatterns(last5);
     
     // Determine direction
     var dir, conf;
-    var total = greenCount + redCount;
-    
-    if (greenCount > redCount) {
+    if (last10Green > last10Red) {
         dir = 'bullish';
-        conf = Math.round((greenCount / total) * 100);
-    } else if (redCount > greenCount) {
+        conf = Math.round((last10Green / 10) * 100);
+    } else if (last10Red > last10Green) {
         dir = 'bearish';
-        conf = Math.round((redCount / total) * 100);
+        conf = Math.round((last10Red / 10) * 100);
     } else {
         dir = 'neutral';
         conf = 50;
     }
     
-    // Predict next move based on patterns
-    var prediction = predictNext(dir, patterns, last5);
+    // Predict next
+    var prediction = predictNext(dir, patterns, last10Green, last10Red);
     
     return {
         dir: dir,
         conf: Math.min(95, conf),
-        greenCount: greenCount,
-        redCount: redCount,
-        total: relevantCandles.length,
         patterns: patterns,
         prediction: prediction
     };
@@ -487,112 +540,101 @@ function analyzeCandles(candles) {
 // ===================== PATTERN DETECTION =====================
 function detectPatterns(candles) {
     var patterns = [];
-    if (candles.length < 2) return patterns;
+    if (candles.length < 3) return patterns;
     
     var last = candles[candles.length - 1];
     var prev = candles[candles.length - 2];
+    var prev2 = candles[candles.length - 3];
     
-    // 3 candle patterns - check last 3 candles
-    if (candles.length >= 3) {
-        var c1 = candles[candles.length - 3];
-        var c2 = candles[candles.length - 2];
-        var c3 = candles[candles.length - 1];
-        
-        // 3 White Soldiers: 3 green candles in a row
-        if (c1.type === 'green' && c2.type === 'green' && c3.type === 'green') {
-            patterns.push({ name: '3 White Soldiers', type: 'bullish', icon: '👨‍👨‍👦' });
-        }
-        
-        // 3 Black Crows: 3 red candles in a row
-        if (c1.type === 'red' && c2.type === 'red' && c3.type === 'red') {
-            patterns.push({ name: '3 Black Crows', type: 'bearish', icon: '🐦‍⬛' });
-        }
-        
-        // Morning Star: red, small, green
-        var c2Height = c2.bot - c2.top;
-        var c1Height = c1.bot - c1.top;
-        var c3Height = c3.bot - c3.top;
-        if (c1.type === 'red' && c3.type === 'green' && c2Height < c1Height * 0.5 && c2Height < c3Height * 0.5) {
-            patterns.push({ name: 'Morning Star', type: 'bullish', icon: '⭐' });
-        }
-        
-        // Evening Star: green, small, red
-        if (c1.type === 'green' && c3.type === 'red' && c2Height < c1Height * 0.5 && c2Height < c3Height * 0.5) {
-            patterns.push({ name: 'Evening Star', type: 'bearish', icon: '🌙' });
-        }
+    // 3 White Soldiers: 3 green candles
+    if (prev2.type === 'green' && prev.type === 'green' && last.type === 'green') {
+        patterns.push({ name: '3 White Soldiers', type: 'bullish', icon: '👨‍👨‍👦' });
     }
     
-    // 2 candle patterns
-    // Bullish Engulfing: red followed by bigger green
-    var lastHeight = last.bot - last.top;
-    var prevHeight = prev.bot - prev.top;
+    // 3 Black Crows: 3 red candles
+    if (prev2.type === 'red' && prev.type === 'red' && last.type === 'red') {
+        patterns.push({ name: '3 Black Crows', type: 'bearish', icon: '🐦‍⬛' });
+    }
     
-    if (prev.type === 'red' && last.type === 'green' && lastHeight > prevHeight) {
+    // Bullish Engulfing: red then bigger green
+    if (prev.type === 'red' && last.type === 'green' && last.height > prev.height) {
         patterns.push({ name: 'Bullish Engulfing', type: 'bullish', icon: '🫂' });
     }
     
-    // Bearish Engulfing: green followed by bigger red
-    if (prev.type === 'green' && last.type === 'red' && lastHeight > prevHeight) {
+    // Bearish Engulfing: green then bigger red
+    if (prev.type === 'green' && last.type === 'red' && last.height > prev.height) {
         patterns.push({ name: 'Bearish Engulfing', type: 'bearish', icon: '🫂' });
     }
     
-    // Single candle patterns
-    // Doji: very small body
-    if (lastHeight < 5) {
-        patterns.push({ name: 'Doji', type: 'neutral', icon: '➕' });
+    // Morning Star: red, small, green
+    if (prev2.type === 'red' && last.type === 'green' && 
+        prev.height < prev2.height * 0.5 && prev.height < last.height * 0.5) {
+        patterns.push({ name: 'Morning Star', type: 'bullish', icon: '⭐' });
+    }
+    
+    // Evening Star: green, small, red
+    if (prev2.type === 'green' && last.type === 'red' && 
+        prev.height < prev2.height * 0.5 && prev.height < last.height * 0.5) {
+        patterns.push({ name: 'Evening Star', type: 'bearish', icon: '🌙' });
     }
     
     return patterns;
 }
 
-// ===================== PREDICT NEXT MOVE =====================
-function predictNext(currentDir, patterns, lastCandles) {
-    // Check last 10 candles for trend (not just 3)
-    var last10 = lastCandles.slice(-10);
-    var last10Green = last10.filter(function(c) { return c.type === 'green'; }).length;
-    var last10Red = last10.filter(function(c) { return c.type === 'red'; }).length;
-    
-    // Pattern-based prediction
+// ===================== PREDICT NEXT =====================
+function predictNext(dir, patterns, greenCount, redCount) {
     var bullishPatterns = patterns.filter(function(p) { return p.type === 'bullish'; });
     var bearishPatterns = patterns.filter(function(p) { return p.type === 'bearish'; });
     
-    var pred = { dir: 'neutral', title: 'WAIT', reason: 'No clear signal', action: 'WAIT', cls: 'wait' };
-    
+    // Pattern takes priority
     if (bullishPatterns.length > 0) {
-        pred = {
+        return {
             dir: 'bullish',
             title: 'Likely UP ↗️',
             reason: bullishPatterns[0].name,
             action: 'BUY',
             cls: 'buy'
         };
-    } else if (bearishPatterns.length > 0) {
-        pred = {
+    }
+    
+    if (bearishPatterns.length > 0) {
+        return {
             dir: 'bearish',
             title: 'Likely DOWN ↘️',
             reason: bearishPatterns[0].name,
             action: 'SELL',
             cls: 'sell'
         };
-    } else if (last10Green > last10Red) {
-        pred = {
+    }
+    
+    // No pattern - use trend
+    if (greenCount > redCount) {
+        return {
             dir: 'bullish',
             title: 'Trend UP ↗️',
-            reason: last10Green + ' green vs ' + last10Red + ' red (last 10)',
+            reason: 'Bullish momentum (' + greenCount + ' green)',
             action: 'BUY',
             cls: 'buy'
         };
-    } else if (last10Red > last10Green) {
-        pred = {
+    }
+    
+    if (redCount > greenCount) {
+        return {
             dir: 'bearish',
             title: 'Trend DOWN ↘️',
-            reason: last10Red + ' red vs ' + last10Green + ' green (last 10)',
+            reason: 'Bearish momentum (' + redCount + ' red)',
             action: 'SELL',
             cls: 'sell'
         };
     }
     
-    return pred;
+    return {
+        dir: 'neutral',
+        title: 'WAIT',
+        reason: 'No clear signal',
+        action: 'WAIT',
+        cls: 'wait'
+    };
 }
 
 // ===================== RENDER RESULTS =====================
@@ -614,7 +656,7 @@ function renderResults(r) {
             '<div class="signal-icon ' + r.dir + '">' + icons[r.dir] + '</div>' +
             '<div class="signal-info">' +
                 '<div class="direction ' + r.dir + '">' + labels[r.dir] + '</div>' +
-                '<div class="meta">Based on recent candles analysis</div>' +
+                '<div class="meta">Based on recent candles</div>' +
             '</div>' +
             '<div class="signal-conf">' +
                 '<div class="num ' + r.dir + '">' + r.conf + '%</div>' +
@@ -631,7 +673,7 @@ function renderResults(r) {
         '</div>' +
         '<div class="patterns-box">' +
             '<div class="patterns-header">' +
-                '<span>🕯️ Patterns (last 5 candles)</span>' +
+                '<span>🕯️ Patterns</span>' +
                 '<span>' + r.patterns.length + ' found</span>' +
             '</div>' +
             '<div class="patterns-chips">' + patsHTML + '</div>' +
