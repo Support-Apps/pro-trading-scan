@@ -156,7 +156,7 @@ function detectColors(imgData) {
     var greenPixels = 0;
     var redPixels = 0;
     var totalChecked = 0;
-    var debugSamples = [];
+    var colorSamples = [];
     
     // Sample pixels
     var step = 3;
@@ -175,25 +175,30 @@ function detectColors(imgData) {
             var saturation = Math.max(r, g, b) - Math.min(r, g, b);
             if (saturation < 30) continue;
             
-            // SIMPLE LOGIC:
-            // If G > R and G > B = GREEN pixel
-            // If R > G and R > B = RED pixel
-            
-            var isGreen = (g > r) && (g >= b) && (g > 60);
-            var isRed = (r > g) && (r > b) && (r > 60);
-            
-            if (isGreen && !isRed) {
-                greenPixels++;
-                if (debugSamples.length < 5 && Math.random() < 0.001) {
-                    debugSamples.push('G: rgb(' + r + ',' + g + ',' + b + ')');
-                }
+            // Collect color samples for debugging
+            if (colorSamples.length < 20 && Math.random() < 0.0005) {
+                colorSamples.push('(' + r + ',' + g + ',' + b + ')');
             }
-            if (isRed && !isGreen) {
-                redPixels++;
-                if (debugSamples.length < 10 && debugSamples.length >= 5 && Math.random() < 0.001) {
-                    debugSamples.push('R: rgb(' + r + ',' + g + ',' + b + ')');
-                }
+            
+            // DETECT GREEN/TEAL:
+            // TradingView teal has G and B both high, R low
+            // G=166, B=154, R=38
+            var isGreen = false;
+            
+            // If G or B is the highest and R is much lower
+            if ((g > r + 20 || b > r + 20) && Math.max(g, b) > 80) {
+                isGreen = true;
             }
+            
+            // DETECT RED:
+            // R is clearly the highest
+            var isRed = false;
+            if (r > g + 20 && r > b + 20 && r > 80) {
+                isRed = true;
+            }
+            
+            if (isGreen && !isRed) greenPixels++;
+            if (isRed && !isGreen) redPixels++;
         }
     }
     
@@ -201,9 +206,9 @@ function detectColors(imgData) {
     var candles = groupIntoCandles(imgData, top, bot, left, right);
     var patterns = detectPatterns(candles);
     
-    var debug = 'Pixels - Green: ' + greenPixels + ', Red: ' + redPixels + ', Total: ' + totalChecked + '<br>';
-    debug += 'Candles found: ' + candles.length + ' (G:' + candles.filter(function(c){return c.type==='green';}).length + ' R:' + candles.filter(function(c){return c.type==='red';}).length + ')<br>';
-    debug += 'Samples: ' + debugSamples.join(', ');
+    var debug = 'Pixels - Green: ' + greenPixels + ', Red: ' + redPixels + '<br>';
+    debug += 'Candles: ' + candles.length + ' (G:' + candles.filter(function(c){return c.type==='green';}).length + ' R:' + candles.filter(function(c){return c.type==='red';}).length + ')<br>';
+    debug += 'Color samples: ' + colorSamples.join(' ');
     
     return {
         green: candles.filter(function(c) { return c.type === 'green'; }).length,
@@ -235,9 +240,14 @@ function groupIntoCandles(imgData, top, bot, left, right) {
             var saturation = Math.max(r,g,b) - Math.min(r,g,b);
             if (saturation < 25) continue;
             
-            // Simple: G > R = green, R > G = red
-            if (g > r && g >= b && g > 50) greenPx++;
-            else if (r > g && r > b && r > 50) redPx++;
+            // GREEN/TEAL: G or B is highest, R is low
+            if ((g > r + 20 || b > r + 20) && Math.max(g, b) > 80) {
+                greenPx++;
+            }
+            // RED: R is clearly highest
+            else if (r > g + 20 && r > b + 20 && r > 80) {
+                redPx++;
+            }
         }
         
         var minPx = Math.max(3, Math.floor(scanH * 0.005));
