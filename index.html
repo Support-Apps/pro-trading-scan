@@ -155,8 +155,8 @@ function detectColors(imgData) {
     
     var greenPixels = 0;
     var redPixels = 0;
-    var totalChecked = 0;
-    var colorSamples = [];
+    var greenSamples = [];
+    var redSamples = [];
     
     // Sample pixels
     var step = 3;
@@ -167,48 +167,60 @@ function detectColors(imgData) {
             var g = data[i + 1];
             var b = data[i + 2];
             
-            totalChecked++;
-            
-            // Skip white, black, gray
+            // Skip white, black
             var brightness = (r + g + b) / 3;
-            if (brightness > 230 || brightness < 30) continue;
-            var saturation = Math.max(r, g, b) - Math.min(r, g, b);
-            if (saturation < 30) continue;
+            if (brightness > 230 || brightness < 25) continue;
             
-            // Collect color samples for debugging
-            if (colorSamples.length < 20 && Math.random() < 0.0005) {
-                colorSamples.push('(' + r + ',' + g + ',' + b + ')');
-            }
+            // HIGH saturation filter - candles have strong colors!
+            // Background (183,176,147) has saturation ~36
+            // Candles (34,103,113) have saturation ~79
+            var maxC = Math.max(r, g, b);
+            var minC = Math.min(r, g, b);
+            var saturation = maxC - minC;
+            
+            if (saturation < 50) continue; // Skip low saturation (background)
             
             // DETECT GREEN/TEAL:
-            // TradingView teal has G and B both high, R low
-            // G=166, B=154, R=38
+            // Teal: R is LOW (<120), G or B is high
             var isGreen = false;
-            
-            // If G or B is the highest and R is much lower
-            if ((g > r + 20 || b > r + 20) && Math.max(g, b) > 80) {
+            if (r < 120 && (g > r + 30 || b > r + 30)) {
+                isGreen = true;
+            }
+            // Pure green
+            if (g > r + 40 && g > b + 20 && g > 100) {
                 isGreen = true;
             }
             
             // DETECT RED:
-            // R is clearly the highest
+            // Red: R is HIGH (>150), much higher than G and B
             var isRed = false;
-            if (r > g + 20 && r > b + 20 && r > 80) {
+            if (r > 150 && r > g + 50 && r > b + 50) {
                 isRed = true;
             }
             
-            if (isGreen && !isRed) greenPixels++;
-            if (isRed && !isGreen) redPixels++;
+            if (isGreen && !isRed) {
+                greenPixels++;
+                if (greenSamples.length < 5 && Math.random() < 0.01) {
+                    greenSamples.push('(' + r + ',' + g + ',' + b + ')');
+                }
+            }
+            if (isRed && !isGreen) {
+                redPixels++;
+                if (redSamples.length < 5 && Math.random() < 0.01) {
+                    redSamples.push('(' + r + ',' + g + ',' + b + ')');
+                }
+            }
         }
     }
     
-    // Group into candles (simplified)
+    // Group into candles
     var candles = groupIntoCandles(imgData, top, bot, left, right);
     var patterns = detectPatterns(candles);
     
     var debug = 'Pixels - Green: ' + greenPixels + ', Red: ' + redPixels + '<br>';
     debug += 'Candles: ' + candles.length + ' (G:' + candles.filter(function(c){return c.type==='green';}).length + ' R:' + candles.filter(function(c){return c.type==='red';}).length + ')<br>';
-    debug += 'Color samples: ' + colorSamples.join(' ');
+    debug += 'Green samples: ' + greenSamples.join(' ') + '<br>';
+    debug += 'Red samples: ' + redSamples.join(' ');
     
     return {
         green: candles.filter(function(c) { return c.type === 'green'; }).length,
@@ -236,21 +248,26 @@ function groupIntoCandles(imgData, top, bot, left, right) {
             var r = data[i], g = data[i+1], b = data[i+2];
             
             var brightness = (r + g + b) / 3;
-            if (brightness > 230 || brightness < 30) continue;
-            var saturation = Math.max(r,g,b) - Math.min(r,g,b);
-            if (saturation < 25) continue;
+            if (brightness > 230 || brightness < 25) continue;
             
-            // GREEN/TEAL: G or B is highest, R is low
-            if ((g > r + 20 || b > r + 20) && Math.max(g, b) > 80) {
+            var saturation = Math.max(r,g,b) - Math.min(r,g,b);
+            if (saturation < 50) continue; // Skip background
+            
+            // GREEN/TEAL: R is low, G or B is high
+            if (r < 120 && (g > r + 30 || b > r + 30)) {
                 greenPx++;
             }
-            // RED: R is clearly highest
-            else if (r > g + 20 && r > b + 20 && r > 80) {
+            // Also pure green
+            else if (g > r + 40 && g > b + 20 && g > 100) {
+                greenPx++;
+            }
+            // RED: R is high, much higher than G and B
+            else if (r > 150 && r > g + 50 && r > b + 50) {
                 redPx++;
             }
         }
         
-        var minPx = Math.max(3, Math.floor(scanH * 0.005));
+        var minPx = Math.max(2, Math.floor(scanH * 0.003));
         if (greenPx > minPx && greenPx > redPx) {
             columns.push({ x: x, type: 'green' });
         } else if (redPx > minPx && redPx > greenPx) {
