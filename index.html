@@ -6,225 +6,71 @@
     <title>TradeScan Pro</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --bg: #0B0E11;
-            --card: #1a1d21;
-            --border: rgba(255,255,255,0.08);
-            --gold: #F0B90B;
-            --green: #0ECB81;
-            --red: #F6465D;
-            --text: #EAECEF;
-            --dim: #848E9C;
-        }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-        
-        .intro-page { min-height: 100vh; padding: 20px; padding-bottom: 100px; }
-        .intro-page.hidden { display: none; }
-        .intro-header { text-align: center; padding: 30px 0 20px; }
-        .intro-logo { width: 80px; height: 80px; margin: 0 auto 16px; background: linear-gradient(135deg, var(--gold), #D4A017); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 36px; }
-        .intro-header h1 { font-size: 1.8em; font-weight: 800; color: var(--gold); }
-        .intro-header p { color: var(--dim); font-size: 0.9em; margin-top: 4px; }
-        .intro-card { background: var(--card); border-radius: 16px; padding: 20px; margin-bottom: 12px; border: 1px solid var(--border); }
-        .intro-card h3 { font-size: 1em; margin-bottom: 12px; }
-        .intro-card p { color: var(--dim); font-size: 0.85em; line-height: 1.6; margin-bottom: 8px; }
-        .pattern-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-        .tag { padding: 6px 10px; border-radius: 8px; font-size: 0.75em; font-weight: 600; }
-        .tag.green { background: rgba(14,203,129,0.15); color: var(--green); }
-        .tag.red { background: rgba(246,70,93,0.15); color: var(--red); }
-        .tag.gold { background: rgba(240,185,11,0.15); color: var(--gold); }
-        .disclaimer { background: rgba(246,70,93,0.08); border: 1px solid rgba(246,70,93,0.2); border-radius: 12px; padding: 14px; }
-        .disclaimer p { font-size: 0.8em; color: var(--dim); margin: 0; }
-        .intro-btn-wrap { position: fixed; bottom: 0; left: 0; right: 0; padding: 16px 20px 28px; background: linear-gradient(0deg, var(--bg) 70%, transparent); }
-        .intro-btn { width: 100%; padding: 16px; border: none; border-radius: 14px; font-size: 1em; font-weight: 700; cursor: pointer; background: linear-gradient(135deg, var(--gold), #D4A017); color: #000; }
-        
-        .scanner-page { display: none; height: 100vh; flex-direction: column; overflow: hidden; }
-        .scanner-page.active { display: flex; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--card); border-bottom: 1px solid var(--border); }
-        .logo-sm { display: flex; align-items: center; gap: 8px; font-weight: 700; }
-        .logo-sm .icon { width: 28px; height: 28px; background: var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #000; font-weight: 800; }
-        .logo-sm span { color: var(--gold); }
-        .back-btn { background: transparent; border: 1px solid var(--border); color: var(--dim); padding: 6px 12px; border-radius: 8px; font-size: 0.8em; cursor: pointer; }
-        
-        .camera-area { position: relative; margin: 8px; border-radius: 14px; overflow: hidden; background: #000; aspect-ratio: 16/9; border: 2px solid var(--border); }
-        #video { width: 100%; height: 100%; object-fit: cover; display: none; }
-        #video.active { display: block; }
+        :root { --bg: #0B0E11; --card: #1a1d21; --border: rgba(255,255,255,0.08); --gold: #F0B90B; --green: #0ECB81; --red: #F6465D; --text: #EAECEF; --dim: #848E9C; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        .page { padding: 15px; }
+        .camera-area { position: relative; border-radius: 14px; overflow: hidden; background: #000; aspect-ratio: 16/9; border: 2px solid var(--border); margin-bottom: 15px; }
+        #video { width: 100%; height: 100%; object-fit: cover; }
         #canvas { display: none; }
-        .cam-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(135deg, #12151a, #0a0c0f); }
-        .cam-placeholder.hidden { display: none; }
-        .cam-placeholder .icon { font-size: 32px; margin-bottom: 8px; }
-        .cam-placeholder p { color: var(--dim); font-size: 0.85em; }
-        .scan-overlay { position: absolute; inset: 0; pointer-events: none; display: none; }
-        .scan-overlay.active { display: block; }
-        .scan-frame { position: absolute; top: 5%; left: 3%; right: 3%; bottom: 5%; border: 2px solid rgba(240,185,11,0.4); border-radius: 10px; }
-        .scan-line { position: absolute; left: 3%; right: 3%; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); box-shadow: 0 0 15px var(--gold); animation: scanMove 2s ease-in-out infinite; }
-        @keyframes scanMove { 0%, 100% { top: 8%; } 50% { top: 90%; } }
-        .live-badge { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.8); padding: 4px 10px; border-radius: 6px; font-size: 0.7em; color: var(--red); display: none; }
-        .live-badge.active { display: block; }
-        
-        .data-panel { flex: 1; padding: 8px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
-        .signal-card { background: var(--card); border-radius: 12px; padding: 12px; border: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
-        .signal-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-        .signal-icon.bullish { background: rgba(14,203,129,0.15); }
-        .signal-icon.bearish { background: rgba(246,70,93,0.15); }
-        .signal-icon.neutral { background: rgba(240,185,11,0.15); }
-        .signal-info { flex: 1; }
-        .signal-info .direction { font-size: 1.15em; font-weight: 800; }
-        .signal-info .direction.bullish { color: var(--green); }
-        .signal-info .direction.bearish { color: var(--red); }
-        .signal-info .direction.neutral { color: var(--gold); }
-        .signal-info .meta { font-size: 0.75em; color: var(--dim); margin-top: 2px; }
-        .signal-conf { text-align: center; }
-        .signal-conf .num { font-size: 1.5em; font-weight: 800; }
-        .signal-conf .num.bullish { color: var(--green); }
-        .signal-conf .num.bearish { color: var(--red); }
-        .signal-conf .num.neutral { color: var(--gold); }
-        .signal-conf .lbl { font-size: 0.6em; color: var(--dim); }
-        
-        .prediction { background: var(--card); border-radius: 12px; padding: 12px; border: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
-        .prediction.bullish { border-left: 3px solid var(--green); }
-        .prediction.bearish { border-left: 3px solid var(--red); }
-        .prediction.neutral { border-left: 3px solid var(--gold); }
-        .prediction .icon { font-size: 22px; }
-        .prediction .text { flex: 1; }
-        .prediction .text strong { font-size: 0.9em; display: block; margin-bottom: 2px; }
-        .prediction .text span { font-size: 0.75em; color: var(--dim); }
-        .prediction .action { font-size: 0.72em; padding: 6px 10px; border-radius: 8px; font-weight: 700; }
-        .prediction .action.buy { background: rgba(14,203,129,0.15); color: var(--green); }
-        .prediction .action.sell { background: rgba(246,70,93,0.15); color: var(--red); }
-        .prediction .action.wait { background: rgba(240,185,11,0.15); color: var(--gold); }
-        
-        .patterns-box { background: var(--card); border-radius: 12px; padding: 10px; border: 1px solid var(--border); }
-        .patterns-header { display: flex; justify-content: space-between; font-size: 0.75em; color: var(--dim); margin-bottom: 8px; }
-        .patterns-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-        .pat-chip { display: flex; align-items: center; gap: 5px; padding: 7px 11px; border-radius: 8px; font-size: 0.78em; font-weight: 600; }
-        .pat-chip.bullish { background: rgba(14,203,129,0.12); color: var(--green); }
-        .pat-chip.bearish { background: rgba(246,70,93,0.12); color: var(--red); }
-        .pat-chip.neutral { background: rgba(240,185,11,0.12); color: var(--gold); }
-        .no-patterns { text-align: center; padding: 15px; color: var(--dim); font-size: 0.85em; }
-        
-        .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--dim); padding: 20px; }
-        .empty-state .icon { font-size: 36px; margin-bottom: 10px; }
-        .empty-state p { font-size: 0.85em; line-height: 1.5; }
-        
-        .scan-btn-area { padding: 8px 8px 20px; }
-        .scan-btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 1em; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .scan-btn.start { background: linear-gradient(135deg, var(--green), #00B37D); color: #fff; }
-        .scan-btn.stop { background: linear-gradient(135deg, var(--red), #D63850); color: #fff; }
+        .live-badge { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.8); padding: 4px 10px; border-radius: 6px; font-size: 0.7em; color: var(--red); }
+        .result-box { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border); }
+        .direction { font-size: 2em; font-weight: 800; text-align: center; margin-bottom: 10px; }
+        .direction.bullish { color: var(--green); }
+        .direction.bearish { color: var(--red); }
+        .direction.neutral { color: var(--gold); }
+        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .stat { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; text-align: center; }
+        .stat .num { font-size: 1.8em; font-weight: 800; }
+        .stat .num.green { color: var(--green); }
+        .stat .num.red { color: var(--red); }
+        .stat .lbl { font-size: 0.8em; color: var(--dim); }
+        .debug { background: #1a1a2e; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 0.75em; color: #888; margin-top: 10px; max-height: 150px; overflow-y: auto; }
+        .patterns { margin-top: 15px; }
+        .patterns h3 { font-size: 0.9em; color: var(--dim); margin-bottom: 10px; }
+        .pat { display: inline-block; padding: 8px 12px; border-radius: 8px; margin: 4px; font-size: 0.85em; font-weight: 600; }
+        .pat.bullish { background: rgba(14,203,129,0.15); color: var(--green); }
+        .pat.bearish { background: rgba(246,70,93,0.15); color: var(--red); }
+        .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 1.1em; font-weight: 700; cursor: pointer; }
+        .btn.start { background: var(--green); color: #fff; }
+        .btn.stop { background: var(--red); color: #fff; }
     </style>
 </head>
 <body>
-    <div class="intro-page" id="introPage">
-        <div class="intro-header">
-            <div class="intro-logo">📈</div>
-            <h1>TradeScan Pro</h1>
-            <p>AI Candlestick Pattern Scanner</p>
-        </div>
-        <div class="intro-card">
-            <h3>🎯 Real-Time Chart Analysis</h3>
-            <p>Point your camera at any candlestick chart. AI detects patterns and predicts the next market direction instantly.</p>
-        </div>
-        <div class="intro-card">
-            <h3>🕯️ Detected Patterns</h3>
-            <p>The scanner recognizes these Japanese candlestick patterns:</p>
-            <div class="pattern-tags">
-                <span class="tag green">🔨 Hammer</span>
-                <span class="tag green">🫂 Bullish Engulfing</span>
-                <span class="tag green">⭐ Morning Star</span>
-                <span class="tag green">👨‍👨‍👦 3 White Soldiers</span>
-                <span class="tag red">💫 Shooting Star</span>
-                <span class="tag red">🫂 Bearish Engulfing</span>
-                <span class="tag red">🌙 Evening Star</span>
-                <span class="tag red">🐦‍⬛ 3 Black Crows</span>
-                <span class="tag gold">➕ Doji</span>
-            </div>
-        </div>
-        <div class="intro-card">
-            <h3>📊 How It Works</h3>
-            <p><strong>1.</strong> Point camera at a candlestick chart (TradingView, MT4, etc.)</p>
-            <p><strong>2.</strong> The AI scans for green and red candles</p>
-            <p><strong>3.</strong> Analyzes the last 10 candles for trend direction</p>
-            <p><strong>4.</strong> Detects patterns in the last 5 candles</p>
-            <p><strong>5.</strong> Predicts the next likely market move</p>
-        </div>
-        <div class="intro-card">
-            <h3>📚 Pattern Meanings</h3>
-            <p><strong>3 White Soldiers</strong> - 3 consecutive green candles rising. Strong bullish signal.</p>
-            <p><strong>3 Black Crows</strong> - 3 consecutive red candles falling. Strong bearish signal.</p>
-            <p><strong>Engulfing</strong> - Current candle completely covers previous. Signals reversal.</p>
-            <p><strong>Morning/Evening Star</strong> - 3-candle reversal pattern.</p>
-        </div>
-        <div class="disclaimer">
-            <p>⚠️ <strong>Risk Warning:</strong> Educational tool only. Not financial advice. Always use stop-losses and manage risk.</p>
-        </div>
-        <div class="intro-btn-wrap">
-            <button class="intro-btn" onclick="showScanner()">→ Open Scanner</button>
-        </div>
-    </div>
-    
-    <div class="scanner-page" id="scannerPage">
-        <div class="top-bar">
-            <div class="logo-sm">
-                <div class="icon">TS</div>
-                Trade<span>Scan</span>
-            </div>
-            <button class="back-btn" onclick="showIntro()">← Back</button>
-        </div>
+    <div class="page">
         <div class="camera-area">
             <video id="video" autoplay playsinline></video>
             <canvas id="canvas"></canvas>
-            <div class="cam-placeholder" id="placeholder">
-                <div class="icon">📷</div>
-                <p>Camera ready</p>
-            </div>
-            <div class="scan-overlay" id="overlay">
-                <div class="scan-frame"></div>
-                <div class="scan-line"></div>
-            </div>
-            <div class="live-badge" id="liveBadge">● LIVE</div>
+            <div class="live-badge" id="liveBadge" style="display:none;">● LIVE</div>
         </div>
-        <div class="data-panel" id="dataPanel">
-            <div class="empty-state">
-                <div class="icon">🔍</div>
-                <p>Point camera at candlestick chart<br>and tap Start Scanning</p>
+        
+        <div class="result-box">
+            <div class="direction neutral" id="direction">WAITING</div>
+            <div class="stats">
+                <div class="stat">
+                    <div class="num green" id="greenCount">0</div>
+                    <div class="lbl">GREEN (Bullish)</div>
+                </div>
+                <div class="stat">
+                    <div class="num red" id="redCount">0</div>
+                    <div class="lbl">RED (Bearish)</div>
+                </div>
             </div>
+            <div class="patterns" id="patterns"></div>
+            <div class="debug" id="debug">Debug info will appear here...</div>
         </div>
-        <div class="scan-btn-area">
-            <button class="scan-btn start" id="scanBtn" onclick="toggleScan()">
-                <span id="btnIcon">▶</span>
-                <span id="btnText">Start Scanning</span>
-            </button>
-        </div>
+        
+        <button class="btn start" id="scanBtn" onclick="toggleScan()">Start Scanning</button>
     </div>
 
 <script>
 var scanning = false;
 var stream = null;
-var animId = null;
-var resultsHistory = [];
-var video, canvas, ctx, placeholder, overlay, dataPanel, liveBadge, scanBtn, btnIcon, btnText;
-
-function showScanner() {
-    document.getElementById('introPage').classList.add('hidden');
-    document.getElementById('scannerPage').classList.add('active');
-}
-
-function showIntro() {
-    stopScan();
-    document.getElementById('scannerPage').classList.remove('active');
-    document.getElementById('introPage').classList.remove('hidden');
-}
+var video, canvas, ctx;
 
 document.addEventListener('DOMContentLoaded', function() {
     video = document.getElementById('video');
     canvas = document.getElementById('canvas');
     ctx = canvas.getContext('2d', { willReadFrequently: true });
-    placeholder = document.getElementById('placeholder');
-    overlay = document.getElementById('overlay');
-    dataPanel = document.getElementById('dataPanel');
-    liveBadge = document.getElementById('liveBadge');
-    scanBtn = document.getElementById('scanBtn');
-    btnIcon = document.getElementById('btnIcon');
-    btnText = document.getElementById('btnText');
 });
 
 function toggleScan() {
@@ -238,19 +84,11 @@ function startScan() {
     }).then(function(s) {
         stream = s;
         video.srcObject = stream;
-        video.classList.add('active');
-        video.onloadedmetadata = function() {
-            scanning = true;
-            resultsHistory = [];
-            placeholder.classList.add('hidden');
-            overlay.classList.add('active');
-            liveBadge.classList.add('active');
-            scanBtn.className = 'scan-btn stop';
-            btnIcon.textContent = '⏹';
-            btnText.textContent = 'Stop Scanning';
-            dataPanel.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Analyzing chart...</p></div>';
-            animId = requestAnimationFrame(analyzeLoop);
-        };
+        scanning = true;
+        document.getElementById('liveBadge').style.display = 'block';
+        document.getElementById('scanBtn').className = 'btn stop';
+        document.getElementById('scanBtn').textContent = 'Stop Scanning';
+        analyze();
     }).catch(function(e) {
         alert('Camera error: ' + e.message);
     });
@@ -258,97 +96,54 @@ function startScan() {
 
 function stopScan() {
     scanning = false;
-    resultsHistory = [];
-    if (animId) cancelAnimationFrame(animId);
     if (stream) stream.getTracks().forEach(function(t) { t.stop(); });
-    video.srcObject = null;
-    video.classList.remove('active');
-    placeholder.classList.remove('hidden');
-    overlay.classList.remove('active');
-    liveBadge.classList.remove('active');
-    scanBtn.className = 'scan-btn start';
-    btnIcon.textContent = '▶';
-    btnText.textContent = 'Start Scanning';
+    document.getElementById('liveBadge').style.display = 'none';
+    document.getElementById('scanBtn').className = 'btn start';
+    document.getElementById('scanBtn').textContent = 'Start Scanning';
 }
 
-var frameCount = 0;
-function analyzeLoop() {
+function analyze() {
     if (!scanning) return;
-    frameCount++;
-    if (frameCount % 6 === 0) doAnalysis();
-    animId = requestAnimationFrame(analyzeLoop);
-}
-
-function doAnalysis() {
-    if (!video.videoWidth) return;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0);
-    var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    var candles = detectCandles(imgData);
     
-    if (candles.length >= 3) {
-        var result = analyzeCandles(candles);
-        resultsHistory.push(result);
-        if (resultsHistory.length > 5) resultsHistory.shift();
+    if (video.videoWidth > 0) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
         
-        // Only show result after we have at least 3 analyses
-        if (resultsHistory.length >= 3) {
-            var stableResult = getMostCommonResult(resultsHistory);
-            renderResults(stableResult);
+        var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        var result = detectColors(imgData);
+        
+        // Update display
+        document.getElementById('greenCount').textContent = result.green;
+        document.getElementById('redCount').textContent = result.red;
+        
+        var dirEl = document.getElementById('direction');
+        if (result.green > result.red) {
+            dirEl.textContent = '📈 BULLISH';
+            dirEl.className = 'direction bullish';
+        } else if (result.red > result.green) {
+            dirEl.textContent = '📉 BEARISH';
+            dirEl.className = 'direction bearish';
         } else {
-            dataPanel.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Analyzing... (' + resultsHistory.length + '/3)</p></div>';
+            dirEl.textContent = '📊 NEUTRAL';
+            dirEl.className = 'direction neutral';
         }
-    } else {
-        dataPanel.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>Looking for candles...<br>Point camera at chart</p></div>';
-    }
-}
-
-function getMostCommonResult(history) {
-    var bullishCount = 0;
-    var bearishCount = 0;
-    
-    history.forEach(function(r) {
-        if (r.dir === 'bullish') bullishCount++;
-        else if (r.dir === 'bearish') bearishCount++;
-    });
-    
-    // Return the most recent result but with stable direction
-    var lastResult = history[history.length - 1];
-    var stableDir = bullishCount >= bearishCount ? 'bullish' : 'bearish';
-    
-    // Override direction with stable one
-    lastResult.dir = stableDir;
-    lastResult.conf = Math.round((Math.max(bullishCount, bearishCount) / history.length) * 100);
-    
-    // Update prediction based on stable direction
-    if (stableDir === 'bullish') {
-        lastResult.prediction = {
-            dir: 'bullish',
-            title: 'Likely UP ↗️',
-            reason: 'Bullish trend detected',
-            action: 'BUY',
-            cls: 'buy'
-        };
-    } else {
-        lastResult.prediction = {
-            dir: 'bearish',
-            title: 'Likely DOWN ↘️',
-            reason: 'Bearish trend detected',
-            action: 'SELL',
-            cls: 'sell'
-        };
+        
+        // Patterns
+        var patsHTML = '';
+        result.patterns.forEach(function(p) {
+            patsHTML += '<span class="pat ' + p.type + '">' + p.icon + ' ' + p.name + '</span>';
+        });
+        document.getElementById('patterns').innerHTML = patsHTML || '<span style="color:#666">No patterns</span>';
+        
+        // Debug
+        document.getElementById('debug').innerHTML = result.debug;
     }
     
-    return lastResult;
+    setTimeout(analyze, 200);
 }
 
-// ===================== CANDLE DETECTION =====================
-// Based on TradingView colors from the image:
-// GREEN/TEAL candles: rgb(38, 166, 154) - teal/turquoise
-// RED candles: rgb(239, 83, 80) - coral red
-
-function detectCandles(imgData) {
+function detectColors(imgData) {
     var data = imgData.data;
     var w = imgData.width;
     var h = imgData.height;
@@ -357,116 +152,99 @@ function detectCandles(imgData) {
     var bot = Math.floor(h * 0.85);
     var left = Math.floor(w * 0.08);
     var right = Math.floor(w * 0.92);
-    var scanH = bot - top;
+    
+    var greenPixels = 0;
+    var redPixels = 0;
+    var totalChecked = 0;
+    var debugSamples = [];
+    
+    // Sample pixels
+    var step = 3;
+    for (var y = top; y < bot; y += step) {
+        for (var x = left; x < right; x += step) {
+            var i = (y * w + x) * 4;
+            var r = data[i];
+            var g = data[i + 1];
+            var b = data[i + 2];
+            
+            totalChecked++;
+            
+            // Skip white, black, gray
+            var brightness = (r + g + b) / 3;
+            if (brightness > 230 || brightness < 30) continue;
+            var saturation = Math.max(r, g, b) - Math.min(r, g, b);
+            if (saturation < 30) continue;
+            
+            // SIMPLE LOGIC:
+            // If G > R and G > B = GREEN pixel
+            // If R > G and R > B = RED pixel
+            
+            var isGreen = (g > r) && (g >= b) && (g > 60);
+            var isRed = (r > g) && (r > b) && (r > 60);
+            
+            if (isGreen && !isRed) {
+                greenPixels++;
+                if (debugSamples.length < 5 && Math.random() < 0.001) {
+                    debugSamples.push('G: rgb(' + r + ',' + g + ',' + b + ')');
+                }
+            }
+            if (isRed && !isGreen) {
+                redPixels++;
+                if (debugSamples.length < 10 && debugSamples.length >= 5 && Math.random() < 0.001) {
+                    debugSamples.push('R: rgb(' + r + ',' + g + ',' + b + ')');
+                }
+            }
+        }
+    }
+    
+    // Group into candles (simplified)
+    var candles = groupIntoCandles(imgData, top, bot, left, right);
+    var patterns = detectPatterns(candles);
+    
+    var debug = 'Pixels - Green: ' + greenPixels + ', Red: ' + redPixels + ', Total: ' + totalChecked + '<br>';
+    debug += 'Candles found: ' + candles.length + ' (G:' + candles.filter(function(c){return c.type==='green';}).length + ' R:' + candles.filter(function(c){return c.type==='red';}).length + ')<br>';
+    debug += 'Samples: ' + debugSamples.join(', ');
+    
+    return {
+        green: candles.filter(function(c) { return c.type === 'green'; }).length,
+        red: candles.filter(function(c) { return c.type === 'red'; }).length,
+        patterns: patterns,
+        debug: debug
+    };
+}
+
+function groupIntoCandles(imgData, top, bot, left, right) {
+    var data = imgData.data;
+    var w = imgData.width;
+    var h = imgData.height;
     var scanW = right - left;
+    var scanH = bot - top;
     
     var columns = [];
-    var step = Math.max(1, Math.floor(scanW / 350));
+    var step = Math.max(1, Math.floor(scanW / 300));
     
     for (var x = left; x < right; x += step) {
         var greenPx = 0, redPx = 0;
-        var greenTop = bot, greenBot = top;
-        var redTop = bot, redBot = top;
         
         for (var y = top; y < bot; y++) {
             var i = (y * w + x) * 4;
             var r = data[i], g = data[i+1], b = data[i+2];
             
-            // Skip very bright (white) or very dark (black)
             var brightness = (r + g + b) / 3;
             if (brightness > 230 || brightness < 30) continue;
+            var saturation = Math.max(r,g,b) - Math.min(r,g,b);
+            if (saturation < 25) continue;
             
-            // Skip gray pixels (no color)
-            var maxC = Math.max(r, g, b);
-            var minC = Math.min(r, g, b);
-            var saturation = maxC - minC;
-            if (saturation < 30) continue;
-            
-            // ===== GREEN DETECTION - ALL SHADES =====
-            // 1. Lime/Bright green: high G, low R and B
-            // 2. Dark green: medium G, very low R and B
-            // 3. Teal/Turquoise: high G and B, low R
-            // 4. Standard green: G is clearly the highest
-            // 5. Forest green: darker, G > R and G > B
-            
-            var isGreen = false;
-            
-            // ANY pixel where G is the dominant channel
-            if (g > r && g > b && g > 50) {
-                isGreen = true;
-            }
-            
-            // Teal: G and B both higher than R (TradingView style)
-            if (g > r && b > r && g > 70 && b > 60) {
-                isGreen = true;
-            }
-            
-            // Lime/Bright green
-            if (g > 150 && g > r * 1.5 && g > b * 1.3) {
-                isGreen = true;
-            }
-            
-            // Dark green
-            if (g > 40 && g > r * 1.5 && g > b * 1.3 && r < 100) {
-                isGreen = true;
-            }
-            
-            // Cyan-ish green
-            if (g > 80 && b > 80 && r < 80) {
-                isGreen = true;
-            }
-            
-            // ===== RED DETECTION =====
-            // Red doesn't change much - R is always dominant
-            
-            var isRed = false;
-            
-            // Standard red: R clearly highest
-            if (r > g && r > b && r > 80 && (r - g) > 20) {
-                isRed = true;
-            }
-            
-            // Coral red (TradingView)
-            if (r > 150 && r > g * 1.4 && r > b * 1.4) {
-                isRed = true;
-            }
-            
-            // Dark red
-            if (r > 60 && r > g * 1.8 && r > b * 1.5) {
-                isRed = true;
-            }
-            
-            // ===== CONFLICT RESOLUTION =====
-            if (isGreen && isRed) {
-                // Calculate color scores
-                var greenScore = g + b - r;
-                var redScore = r - g - b/2;
-                if (greenScore > redScore) {
-                    isRed = false;
-                } else {
-                    isGreen = false;
-                }
-            }
-            
-            if (isGreen) {
-                greenPx++;
-                if (y < greenTop) greenTop = y;
-                if (y > greenBot) greenBot = y;
-            }
-            if (isRed) {
-                redPx++;
-                if (y < redTop) redTop = y;
-                if (y > redBot) redBot = y;
-            }
+            // Simple: G > R = green, R > G = red
+            if (g > r && g >= b && g > 50) greenPx++;
+            else if (r > g && r > b && r > 50) redPx++;
         }
         
-        // Lower threshold to catch more candles
-        var minPx = Math.max(2, Math.floor(scanH * 0.004));
-        
+        var minPx = Math.max(3, Math.floor(scanH * 0.005));
         if (greenPx > minPx && greenPx > redPx) {
-            columns.push({ x: x, type: 'green', top: greenTop, bot: greenBot, px: greenPx });
+            columns.push({ x: x, type: 'green' });
         } else if (redPx > minPx && redPx > greenPx) {
-            columns.push({ x: x, type: 'red', top: redTop, bot: redBot, px: redPx });
+            columns.push({ x: x, type: 'red' });
         }
     }
     
@@ -474,210 +252,54 @@ function detectCandles(imgData) {
     var candles = [];
     if (columns.length === 0) return candles;
     
-    var cur = { x: columns[0].x, type: columns[0].type, top: columns[0].top, bot: columns[0].bot, n: 1 };
-    var minGap = Math.max(2, Math.floor(scanW / 120));
+    var cur = { type: columns[0].type, x: columns[0].x };
+    var minGap = Math.floor(scanW / 100);
     
     for (var i = 1; i < columns.length; i++) {
         var c = columns[i];
         var gap = c.x - cur.x;
         
         if (gap <= minGap && c.type === cur.type) {
-            cur.top = Math.min(cur.top, c.top);
-            cur.bot = Math.max(cur.bot, c.bot);
-            cur.n++;
+            cur.x = c.x;
         } else {
-            candles.push({ type: cur.type, height: cur.bot - cur.top });
-            cur = { x: c.x, type: c.type, top: c.top, bot: c.bot, n: 1 };
+            candles.push({ type: cur.type });
+            cur = { type: c.type, x: c.x };
         }
     }
-    candles.push({ type: cur.type, height: cur.bot - cur.top });
+    candles.push({ type: cur.type });
     
     return candles;
 }
 
-// ===================== ANALYZE CANDLES =====================
-function analyzeCandles(candles) {
-    // Count all candles
-    var totalGreen = 0, totalRed = 0;
-    candles.forEach(function(c) {
-        if (c.type === 'green') totalGreen++;
-        else totalRed++;
-    });
-    
-    // Get last 10 for trend
-    var last10 = candles.slice(-10);
-    var last10Green = last10.filter(function(c) { return c.type === 'green'; }).length;
-    var last10Red = last10.filter(function(c) { return c.type === 'red'; }).length;
-    
-    // Get last 5 for patterns
-    var last5 = candles.slice(-5);
-    var patterns = detectPatterns(last5);
-    
-    // Determine direction
-    var dir, conf;
-    if (last10Green > last10Red) {
-        dir = 'bullish';
-        conf = Math.round((last10Green / 10) * 100);
-    } else if (last10Red > last10Green) {
-        dir = 'bearish';
-        conf = Math.round((last10Red / 10) * 100);
-    } else {
-        dir = 'neutral';
-        conf = 50;
-    }
-    
-    // Predict next
-    var prediction = predictNext(dir, patterns, last10Green, last10Red);
-    
-    return {
-        dir: dir,
-        conf: Math.min(95, conf),
-        patterns: patterns,
-        prediction: prediction
-    };
-}
-
-// ===================== PATTERN DETECTION =====================
 function detectPatterns(candles) {
     var patterns = [];
     if (candles.length < 3) return patterns;
     
-    var last = candles[candles.length - 1];
-    var prev = candles[candles.length - 2];
-    var prev2 = candles[candles.length - 3];
+    var last3 = candles.slice(-3);
     
-    // 3 White Soldiers: 3 green candles
-    if (prev2.type === 'green' && prev.type === 'green' && last.type === 'green') {
+    // 3 White Soldiers
+    if (last3[0].type === 'green' && last3[1].type === 'green' && last3[2].type === 'green') {
         patterns.push({ name: '3 White Soldiers', type: 'bullish', icon: '👨‍👨‍👦' });
     }
     
-    // 3 Black Crows: 3 red candles
-    if (prev2.type === 'red' && prev.type === 'red' && last.type === 'red') {
+    // 3 Black Crows
+    if (last3[0].type === 'red' && last3[1].type === 'red' && last3[2].type === 'red') {
         patterns.push({ name: '3 Black Crows', type: 'bearish', icon: '🐦‍⬛' });
     }
     
-    // Bullish Engulfing: red then bigger green
-    if (prev.type === 'red' && last.type === 'green' && last.height > prev.height) {
-        patterns.push({ name: 'Bullish Engulfing', type: 'bullish', icon: '🫂' });
-    }
-    
-    // Bearish Engulfing: green then bigger red
-    if (prev.type === 'green' && last.type === 'red' && last.height > prev.height) {
-        patterns.push({ name: 'Bearish Engulfing', type: 'bearish', icon: '🫂' });
-    }
-    
-    // Morning Star: red, small, green
-    if (prev2.type === 'red' && last.type === 'green' && 
-        prev.height < prev2.height * 0.5 && prev.height < last.height * 0.5) {
-        patterns.push({ name: 'Morning Star', type: 'bullish', icon: '⭐' });
-    }
-    
-    // Evening Star: green, small, red
-    if (prev2.type === 'green' && last.type === 'red' && 
-        prev.height < prev2.height * 0.5 && prev.height < last.height * 0.5) {
-        patterns.push({ name: 'Evening Star', type: 'bearish', icon: '🌙' });
+    // Bullish Engulfing (simplified)
+    if (candles.length >= 2) {
+        var prev = candles[candles.length - 2];
+        var last = candles[candles.length - 1];
+        if (prev.type === 'red' && last.type === 'green') {
+            patterns.push({ name: 'Bullish Engulfing', type: 'bullish', icon: '🫂' });
+        }
+        if (prev.type === 'green' && last.type === 'red') {
+            patterns.push({ name: 'Bearish Engulfing', type: 'bearish', icon: '🫂' });
+        }
     }
     
     return patterns;
-}
-
-// ===================== PREDICT NEXT =====================
-function predictNext(dir, patterns, greenCount, redCount) {
-    var bullishPatterns = patterns.filter(function(p) { return p.type === 'bullish'; });
-    var bearishPatterns = patterns.filter(function(p) { return p.type === 'bearish'; });
-    
-    // Pattern takes priority
-    if (bullishPatterns.length > 0) {
-        return {
-            dir: 'bullish',
-            title: 'Likely UP ↗️',
-            reason: bullishPatterns[0].name,
-            action: 'BUY',
-            cls: 'buy'
-        };
-    }
-    
-    if (bearishPatterns.length > 0) {
-        return {
-            dir: 'bearish',
-            title: 'Likely DOWN ↘️',
-            reason: bearishPatterns[0].name,
-            action: 'SELL',
-            cls: 'sell'
-        };
-    }
-    
-    // No pattern - use trend
-    if (greenCount > redCount) {
-        return {
-            dir: 'bullish',
-            title: 'Trend UP ↗️',
-            reason: 'Bullish momentum (' + greenCount + ' green)',
-            action: 'BUY',
-            cls: 'buy'
-        };
-    }
-    
-    if (redCount > greenCount) {
-        return {
-            dir: 'bearish',
-            title: 'Trend DOWN ↘️',
-            reason: 'Bearish momentum (' + redCount + ' red)',
-            action: 'SELL',
-            cls: 'sell'
-        };
-    }
-    
-    return {
-        dir: 'neutral',
-        title: 'WAIT',
-        reason: 'No clear signal',
-        action: 'WAIT',
-        cls: 'wait'
-    };
-}
-
-// ===================== RENDER RESULTS =====================
-function renderResults(r) {
-    var icons = { bullish: '📈', bearish: '📉', neutral: '📊' };
-    var labels = { bullish: 'BULLISH', bearish: 'BEARISH', neutral: 'NEUTRAL' };
-    
-    var patsHTML = '';
-    if (r.patterns.length > 0) {
-        r.patterns.forEach(function(p) {
-            patsHTML += '<div class="pat-chip ' + p.type + '">' + p.icon + ' ' + p.name + '</div>';
-        });
-    } else {
-        patsHTML = '<div class="no-patterns">No patterns detected</div>';
-    }
-    
-    dataPanel.innerHTML = 
-        '<div class="signal-card">' +
-            '<div class="signal-icon ' + r.dir + '">' + icons[r.dir] + '</div>' +
-            '<div class="signal-info">' +
-                '<div class="direction ' + r.dir + '">' + labels[r.dir] + '</div>' +
-                '<div class="meta">Based on recent candles</div>' +
-            '</div>' +
-            '<div class="signal-conf">' +
-                '<div class="num ' + r.dir + '">' + r.conf + '%</div>' +
-                '<div class="lbl">Confidence</div>' +
-            '</div>' +
-        '</div>' +
-        '<div class="prediction ' + r.prediction.dir + '">' +
-            '<div class="icon">🎯</div>' +
-            '<div class="text">' +
-                '<strong>NEXT: ' + r.prediction.title + '</strong>' +
-                '<span>' + r.prediction.reason + '</span>' +
-            '</div>' +
-            '<div class="action ' + r.prediction.cls + '">' + r.prediction.action + '</div>' +
-        '</div>' +
-        '<div class="patterns-box">' +
-            '<div class="patterns-header">' +
-                '<span>🕯️ Patterns</span>' +
-                '<span>' + r.patterns.length + ' found</span>' +
-            '</div>' +
-            '<div class="patterns-chips">' + patsHTML + '</div>' +
-        '</div>';
 }
 </script>
 </body>
