@@ -183,15 +183,19 @@ function startScan() {
     }).then(function(s) {
         stream = s;
         video.srcObject = stream;
-        scanning = true;
-        history = [];
-        overlay.classList.add('active');
-        liveBadge.style.display = 'block';
-        scanBtn.className = 'scan-btn stop';
-        btnIcon.textContent = '⏹';
-        btnText.textContent = 'Stop Scanning';
-        resultPanel.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Analyzing chart...</p></div>';
-        analyze();
+        
+        video.onloadedmetadata = function() {
+            video.play();
+            scanning = true;
+            history = [];
+            overlay.classList.add('active');
+            liveBadge.style.display = 'block';
+            scanBtn.className = 'scan-btn stop';
+            btnIcon.textContent = '⏹';
+            btnText.textContent = 'Stop Scanning';
+            resultPanel.innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Analyzing chart...</p></div>';
+            analyze();
+        };
     }).catch(function(e) {
         alert('Camera error: ' + e.message);
     });
