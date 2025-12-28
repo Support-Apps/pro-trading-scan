@@ -9,6 +9,7 @@
         :root { --bg: #0B0E11; --card: #1a1d21; --border: rgba(255,255,255,0.08); --gold: #F0B90B; --green: #0ECB81; --red: #F6465D; --text: #EAECEF; --dim: #848E9C; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
         
+        /* INTRO PAGE */
         .intro-page { min-height: 100vh; padding: 20px; padding-bottom: 100px; }
         .intro-page.hidden { display: none; }
         .intro-header { text-align: center; padding: 30px 0 20px; }
@@ -27,26 +28,22 @@
         .intro-btn-wrap { position: fixed; bottom: 0; left: 0; right: 0; padding: 16px 20px 28px; background: linear-gradient(0deg, var(--bg) 70%, transparent); }
         .intro-btn { width: 100%; padding: 16px; border: none; border-radius: 14px; font-size: 1em; font-weight: 700; cursor: pointer; background: linear-gradient(135deg, var(--gold), #D4A017); color: #000; }
         
-        .scanner-page { display: none; padding: 15px; }
-        .scanner-page.active { display: block; }
+        /* SCANNER PAGE */
+        .page { padding: 15px; display: none; }
+        .page.active { display: block; }
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .logo-sm { display: flex; align-items: center; gap: 8px; font-weight: 700; }
         .logo-sm .icon { width: 28px; height: 28px; background: var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
         .back-btn { background: rgba(255,255,255,0.1); border: none; color: var(--dim); padding: 8px 14px; border-radius: 8px; font-size: 0.85em; cursor: pointer; }
-        
         .camera-area { position: relative; border-radius: 14px; overflow: hidden; background: #000; aspect-ratio: 16/9; border: 2px solid var(--border); margin-bottom: 15px; }
         #video { width: 100%; height: 100%; object-fit: cover; }
         #canvas { display: none; }
         .live-badge { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.8); padding: 4px 10px; border-radius: 6px; font-size: 0.7em; color: var(--red); }
-        .scan-frame { position: absolute; inset: 5%; border: 2px solid rgba(240,185,11,0.4); border-radius: 10px; pointer-events: none; display: none; }
-        .scan-frame.active { display: block; }
-        
         .result-box { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border); }
         .direction { font-size: 2em; font-weight: 800; text-align: center; margin-bottom: 10px; }
         .direction.bullish { color: var(--green); }
         .direction.bearish { color: var(--red); }
         .direction.neutral { color: var(--gold); }
-        .confidence { text-align: center; color: var(--dim); font-size: 0.9em; margin-bottom: 15px; }
         .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         .stat { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; text-align: center; }
         .stat .num { font-size: 1.8em; font-weight: 800; }
@@ -54,7 +51,6 @@
         .stat .num.red { color: var(--red); }
         .stat .lbl { font-size: 0.8em; color: var(--dim); }
         .patterns { margin-top: 15px; }
-        .patterns-title { font-size: 0.85em; color: var(--dim); margin-bottom: 8px; }
         .pat { display: inline-block; padding: 8px 12px; border-radius: 8px; margin: 4px; font-size: 0.85em; font-weight: 600; }
         .pat.bullish { background: rgba(14,203,129,0.15); color: var(--green); }
         .pat.bearish { background: rgba(246,70,93,0.15); color: var(--red); }
@@ -64,6 +60,7 @@
     </style>
 </head>
 <body>
+    <!-- INTRO PAGE -->
     <div class="intro-page" id="introPage">
         <div class="intro-header">
             <div class="intro-logo">📈</div>
@@ -97,23 +94,21 @@
             <button class="intro-btn" onclick="showScanner()">→ Open Scanner</button>
         </div>
     </div>
-    
-    <div class="scanner-page" id="scannerPage">
+
+    <!-- SCANNER PAGE -->
+    <div class="page" id="scannerPage">
         <div class="top-bar">
             <div class="logo-sm"><div class="icon">📈</div> TradeScan</div>
             <button class="back-btn" onclick="showIntro()">← Back</button>
         </div>
-        
         <div class="camera-area">
             <video id="video" autoplay playsinline></video>
             <canvas id="canvas"></canvas>
-            <div class="scan-frame" id="scanFrame"></div>
             <div class="live-badge" id="liveBadge" style="display:none;">● LIVE</div>
         </div>
         
         <div class="result-box">
             <div class="direction neutral" id="direction">WAITING</div>
-            <div class="confidence" id="confidence"></div>
             <div class="stats">
                 <div class="stat">
                     <div class="num green" id="greenCount">0</div>
@@ -124,10 +119,7 @@
                     <div class="lbl">RED (Bearish)</div>
                 </div>
             </div>
-            <div class="patterns">
-                <div class="patterns-title">🕯️ Patterns Detected</div>
-                <div id="patterns"><span style="color:#666">No patterns</span></div>
-            </div>
+            <div class="patterns" id="patterns"></div>
         </div>
         
         <button class="btn start" id="scanBtn" onclick="toggleScan()">Start Scanning</button>
@@ -170,7 +162,6 @@ function startScan() {
         scanning = true;
         historyResults = [];
         document.getElementById('liveBadge').style.display = 'block';
-        document.getElementById('scanFrame').classList.add('active');
         document.getElementById('scanBtn').className = 'btn stop';
         document.getElementById('scanBtn').textContent = 'Stop Scanning';
         analyze();
@@ -183,7 +174,6 @@ function stopScan() {
     scanning = false;
     if (stream) stream.getTracks().forEach(function(t) { t.stop(); });
     document.getElementById('liveBadge').style.display = 'none';
-    document.getElementById('scanFrame').classList.remove('active');
     document.getElementById('scanBtn').className = 'btn start';
     document.getElementById('scanBtn').textContent = 'Start Scanning';
 }
@@ -208,22 +198,15 @@ function analyze() {
         document.getElementById('redCount').textContent = stable.red;
         
         var dirEl = document.getElementById('direction');
-        var confEl = document.getElementById('confidence');
-        
         if (stable.green > stable.red) {
             dirEl.textContent = '📈 BULLISH';
             dirEl.className = 'direction bullish';
-            var conf = Math.round((stable.green / (stable.green + stable.red)) * 100);
-            confEl.textContent = conf + '% bullish momentum';
         } else if (stable.red > stable.green) {
             dirEl.textContent = '📉 BEARISH';
             dirEl.className = 'direction bearish';
-            var conf = Math.round((stable.red / (stable.green + stable.red)) * 100);
-            confEl.textContent = conf + '% bearish momentum';
         } else {
             dirEl.textContent = '📊 NEUTRAL';
             dirEl.className = 'direction neutral';
-            confEl.textContent = 'Market is undecided';
         }
         
         var patsHTML = '';
