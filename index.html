@@ -261,7 +261,7 @@ function detectCandles(imgData) {
         }
     }
     
-    // Group columns into candles
+    // Group columns into candles (ordered left to right)
     var candles = [];
     if (columns.length > 0) {
         var cur = { type: columns[0].type, x: columns[0].x };
@@ -279,23 +279,39 @@ function detectCandles(imgData) {
         candles.push({ type: cur.type });
     }
     
-    var greenCandles = candles.filter(function(c) { return c.type === 'green'; }).length;
-    var redCandles = candles.filter(function(c) { return c.type === 'red'; }).length;
+    // ========== FOCUS ON LAST (RIGHTMOST) CANDLES ==========
+    // Take last 25 candles for trend analysis
+    var lastCandles = candles.slice(-25);
     
-    // Detect patterns from last candles
+    var greenCandles = lastCandles.filter(function(c) { return c.type === 'green'; }).length;
+    var redCandles = lastCandles.filter(function(c) { return c.type === 'red'; }).length;
+    
+    // Take last 20 candles for pattern detection
+    var patternCandles = candles.slice(-20);
+    
+    // Detect patterns from last 20 candles (patternCandles)
     var patterns = [];
-    if (candles.length >= 3) {
-        var last3 = candles.slice(-3);
+    if (patternCandles.length >= 3) {
+        var last3 = patternCandles.slice(-3);
         if (last3[0].type === 'green' && last3[1].type === 'green' && last3[2].type === 'green') {
             patterns.push({ name: '3 White Soldiers', type: 'bullish', icon: '👨‍👨‍👦' });
         }
         if (last3[0].type === 'red' && last3[1].type === 'red' && last3[2].type === 'red') {
             patterns.push({ name: '3 Black Crows', type: 'bearish', icon: '🐦‍⬛' });
         }
+        
+        // Morning Star: red -> any -> green (bullish reversal)
+        if (last3[0].type === 'red' && last3[2].type === 'green') {
+            patterns.push({ name: 'Morning Star', type: 'bullish', icon: '⭐' });
+        }
+        // Evening Star: green -> any -> red (bearish reversal)
+        if (last3[0].type === 'green' && last3[2].type === 'red') {
+            patterns.push({ name: 'Evening Star', type: 'bearish', icon: '🌙' });
+        }
     }
-    if (candles.length >= 2) {
-        var prev = candles[candles.length - 2];
-        var last = candles[candles.length - 1];
+    if (patternCandles.length >= 2) {
+        var prev = patternCandles[patternCandles.length - 2];
+        var last = patternCandles[patternCandles.length - 1];
         if (prev.type === 'red' && last.type === 'green') {
             patterns.push({ name: 'Bullish Engulfing', type: 'bullish', icon: '🫂' });
         }
@@ -304,7 +320,8 @@ function detectCandles(imgData) {
         }
     }
     
-    var debug = 'Candles: ' + candles.length + ' (G:' + greenCandles + ' R:' + redCandles + ')<br>';
+    var totalCandles = candles.length;
+    var debug = 'Total: ' + totalCandles + ' | Trend(25): G:' + greenCandles + ' R:' + redCandles + '<br>';
     debug += 'Pixels: G:' + greenPxTotal + ' R:' + redPxTotal + '<br>';
     debug += 'Green: ' + greenSamples.join(' ') + '<br>';
     debug += 'Red: ' + redSamples.join(' ');
